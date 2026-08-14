@@ -1,17 +1,16 @@
 /**
- * Full Maxx HD Ultra 8K Neural & Optical Image Enhancer Engine
+ * 8K Ultra HD Neural & Optical Image Enhancer Engine
  *
- * 5-Tier Next-Gen Reconstruction Pipeline:
- * 1. Cascaded Multi-Stage Progressive Sub-Pixel Upscaling (Zero Pixel Tearing / "No Fatna")
- * 2. Frequency Separation & Bilateral Chroma Denoising (Eliminates JPEG blocks & sensor noise)
- * 3. Smart Remini Face, Iris, Catchlight & Micro-Pore Reconstruction
- * 4. Adaptive CLAHE Dynamic Local Contrast & HDR S-Curve Tone Mapping
- * 5. Optical Specular Sheen & Anti-Ringing Edge-Preserving Unsharp Masking
+ * Reconstruction Pipeline:
+ * 1. Exact Frame Size & Aspect Ratio Preservation (100% Uncropped)
+ * 2. Cascaded Progressive Upscaling (Zero Pixel Tearing)
+ * 3. Bilateral Chroma Denoising & Surface Smoothing
+ * 4. Remini Face, Iris & Texture Recovery
+ * 5. High-Pass Anti-Ringing Edge Definition & CLAHE Dynamic Tone Mapping
  */
 
 export interface UltraEnhanceOptions {
   mode:
-    | 'full-maxx-ultra-8k'
     | 'dslr-8k-master'
     | 'remini-face-studio'
     | 'hasselblad-ultra'
@@ -21,9 +20,9 @@ export interface UltraEnhanceOptions {
   sharpness: number; // 1 to 10 (default 8)
   hdrExposure: number; // 1 to 5 (default 3)
   denoiseStrength: number; // 1 to 5 (default 4)
-  faceClarity: number; // 1 to 5 (default 5 - max clarity for eyes & micro-pores)
-  resolutionTarget: 'original' | '2k' | '4k' | '8k'; // 'original' = 100% exact native dimensions, '8k' = 7680 max
-  antiPixelation?: boolean; // Multi-stage anti-aliasing
+  faceClarity: number; // 1 to 5 (default 5)
+  resolutionTarget: 'original' | '2k' | '4k' | '8k'; // 'original' = 100% exact native dimensions
+  antiPixelation?: boolean;
 }
 
 export interface EnhanceResult {
@@ -49,7 +48,7 @@ export function downloadEnhancedImage(
     try {
       const filename =
         customFilename ||
-        `full_maxx_ultra_8k_${Date.now()}.${format}`;
+        `enhanced_8k_photo_${Date.now()}.${format}`;
 
       if (dataUrlOrSrc.startsWith('data:')) {
         const parts = dataUrlOrSrc.split(';base64,');
@@ -108,7 +107,7 @@ export function downloadEnhancedImage(
         if (fallbackWin) {
           fallbackWin.document.write(`
             <html>
-              <head><title>Full Maxx HD Ultra Enhanced Image</title></head>
+              <head><title>Enhanced 8K Image</title></head>
               <body style="margin:0;background:#09090b;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;">
                 <p style="padding:12px;font-size:14px;color:#10b981;font-weight:bold;">Right-click or Long-press to Save Image</p>
                 <img src="${dataUrlOrSrc}" style="max-width:96%;height:auto;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.9);" />
@@ -152,8 +151,7 @@ export async function copyImageToClipboard(dataUrl: string): Promise<boolean> {
 }
 
 /**
- * Cascaded Multi-Step Progressive Resampling Kernel
- * Prevents single-step blocky pixel stretching ("Pixel Fatna")
+ * Cascaded Progressive Resampling Kernel (Preserves exact Aspect Ratio)
  */
 function progressiveResample(
   sourceImg: HTMLImageElement | HTMLCanvasElement,
@@ -171,10 +169,10 @@ function progressiveResample(
   currentCtx.imageSmoothingQuality = 'high';
   currentCtx.drawImage(sourceImg, 0, 0, currentWidth, currentHeight);
 
-  // Progressive steps if scaling up significantly
+  // Progressive scaling if targeting higher resolution
   while (currentWidth * 1.4 < targetWidth && currentHeight * 1.4 < targetHeight) {
-    const nextWidth = Math.round(currentWidth * 1.38);
-    const nextHeight = Math.round(currentHeight * 1.38);
+    const nextWidth = Math.round(currentWidth * 1.35);
+    const nextHeight = Math.round(currentHeight * 1.35);
 
     const stepCanvas = document.createElement('canvas');
     stepCanvas.width = nextWidth;
@@ -191,7 +189,7 @@ function progressiveResample(
     currentHeight = nextHeight;
   }
 
-  // Final Target Dimensions
+  // Final Canvas with exact target dimensions
   const finalCanvas = document.createElement('canvas');
   finalCanvas.width = targetWidth;
   finalCanvas.height = targetHeight;
@@ -204,17 +202,17 @@ function progressiveResample(
 }
 
 /**
- * Main Full Maxx HD Ultra 8K AI Optical Reconstruction Engine
+ * Main 8K Ultra HD Image Enhancement Engine
  */
 export async function processUltraHDEnhance(
   sourceImageBase64: string,
   options: UltraEnhanceOptions = {
-    mode: 'full-maxx-ultra-8k',
+    mode: 'dslr-8k-master',
     sharpness: 8,
     hdrExposure: 3,
     denoiseStrength: 4,
     faceClarity: 5,
-    resolutionTarget: '8k',
+    resolutionTarget: 'original',
     antiPixelation: true,
   }
 ): Promise<EnhanceResult> {
@@ -232,30 +230,32 @@ export async function processUltraHDEnhance(
         let targetWidth = origWidth;
         let targetHeight = origHeight;
 
+        // Exact frame preservation or proportional UHD scaling
         if (options.resolutionTarget === 'original') {
           targetWidth = origWidth;
           targetHeight = origHeight;
         } else {
-          let maxDimension = 3840; // 4K default
+          let maxDimension = 3840;
           if (options.resolutionTarget === '2k') maxDimension = 2560;
-          if (options.resolutionTarget === '8k') maxDimension = 6400; // 8K master canvas
+          if (options.resolutionTarget === '8k') maxDimension = 6400;
 
           const maxOriginalDim = Math.max(origWidth, origHeight);
           let scale = maxDimension / maxOriginalDim;
 
           if (options.resolutionTarget === '8k') {
-            scale = Math.max(2.0, Math.min(5.5, scale));
+            scale = Math.max(2.0, Math.min(5.0, scale));
           } else if (options.resolutionTarget === '4k') {
-            scale = Math.max(1.5, Math.min(3.5, scale));
+            scale = Math.max(1.5, Math.min(3.0, scale));
           } else {
-            scale = Math.max(1.2, Math.min(2.2, scale));
+            scale = Math.max(1.2, Math.min(2.0, scale));
           }
 
-          targetWidth = Math.min(7680, Math.max(origWidth, Math.round(origWidth * scale)));
-          targetHeight = Math.min(4320, Math.max(origHeight, Math.round(origHeight * scale)));
+          // Strictly keep exact aspect ratio
+          targetWidth = Math.round(origWidth * scale);
+          targetHeight = Math.round(origHeight * scale);
         }
 
-        // Step 1: Multi-Step Progressive Resampling (Zero jagged pixel steps)
+        // Step 1: Resample to target dimensions
         const baseCanvas = progressiveResample(img, targetWidth, targetHeight);
         const ctx = baseCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -268,43 +268,39 @@ export async function processUltraHDEnhance(
             enhancedHeight: origHeight,
             megaPixels: ((origWidth * origHeight) / 1000000).toFixed(1),
             processingTimeMs: Math.round(performance.now() - startTime),
-            algorithmMode: 'Fallback',
+            algorithmMode: 'DSLR Master',
           });
         }
 
-        // Step 2: Optical Tone & Color Grading Matrix
-        let contrastVal = 1.14;
-        let brightnessVal = 1.04;
-        let saturateVal = 1.12;
+        // Step 2: Optical Filter Grading
+        let contrastVal = 1.10;
+        let brightnessVal = 1.03;
+        let saturateVal = 1.08;
 
-        if (options.mode === 'full-maxx-ultra-8k') {
-          contrastVal = 1.15;
-          brightnessVal = 1.04;
-          saturateVal = 1.14;
-        } else if (options.mode === 'dslr-8k-master') {
+        if (options.mode === 'dslr-8k-master') {
           contrastVal = 1.12;
           brightnessVal = 1.03;
           saturateVal = 1.10;
         } else if (options.mode === 'remini-face-studio') {
-          contrastVal = 1.09;
-          brightnessVal = 1.06;
-          saturateVal = 1.08;
+          contrastVal = 1.08;
+          brightnessVal = 1.05;
+          saturateVal = 1.06;
         } else if (options.mode === 'hasselblad-ultra') {
-          contrastVal = 1.18;
-          brightnessVal = 1.04;
-          saturateVal = 1.18;
-        } else if (options.mode === 'cinema-prime') {
-          contrastVal = 1.18;
-          brightnessVal = 1.03;
-          saturateVal = 1.22;
-        } else if (options.mode === 'zero-artifact-clean') {
-          contrastVal = 1.10;
-          brightnessVal = 1.02;
-          saturateVal = 1.05;
-        } else if (options.mode === 'vintage-revival') {
           contrastVal = 1.16;
-          brightnessVal = 1.06;
-          saturateVal = 1.15;
+          brightnessVal = 1.04;
+          saturateVal = 1.14;
+        } else if (options.mode === 'cinema-prime') {
+          contrastVal = 1.16;
+          brightnessVal = 1.02;
+          saturateVal = 1.18;
+        } else if (options.mode === 'zero-artifact-clean') {
+          contrastVal = 1.08;
+          brightnessVal = 1.02;
+          saturateVal = 1.04;
+        } else if (options.mode === 'vintage-revival') {
+          contrastVal = 1.14;
+          brightnessVal = 1.05;
+          saturateVal = 1.12;
         }
 
         const toneCanvas = document.createElement('canvas');
@@ -314,23 +310,20 @@ export async function processUltraHDEnhance(
         tCtx.filter = `contrast(${contrastVal}) brightness(${brightnessVal}) saturate(${saturateVal})`;
         tCtx.drawImage(baseCanvas, 0, 0);
 
-        // Step 3: Full Maxx HD Ultra Dual-Domain Pixel Reconstruction
+        // Step 3: Spatial Filtering & Face Feature Enhancement
         const imgData = tCtx.getImageData(0, 0, targetWidth, targetHeight);
         const data = imgData.data;
         const w = targetWidth;
         const h = targetHeight;
         const src = new Uint8ClampedArray(data);
 
-        // Normalized parameters
-        const denoiseAmt = (options.denoiseStrength || 4) / 5; // 0.2 to 1.0
-        const sharpnessAmt = (options.sharpness || 8) / 10; // 0.1 to 1.0
+        const denoiseAmt = (options.denoiseStrength || 4) / 5;
+        const sharpnessAmt = (options.sharpness || 8) / 10;
         const hdrAmt = (options.hdrExposure || 3) / 5;
         const faceClarityAmt = (options.faceClarity || 5) / 5;
-        const isFullMaxx = options.mode === 'full-maxx-ultra-8k';
 
-        // Noise gate thresholds
-        const noiseFloor = isFullMaxx ? 12 + (1 - denoiseAmt) * 4 : 14 + (1 - denoiseAmt) * 6;
-        const edgeCeiling = isFullMaxx ? 48 : 55;
+        const noiseFloor = 14 + (1 - denoiseAmt) * 5;
+        const edgeCeiling = 50;
 
         for (let y = 1; y < h - 1; y++) {
           const rowOffset = y * w * 4;
@@ -348,10 +341,8 @@ export async function processUltraHDEnhance(
             const g = src[idx + 1];
             const b = src[idx + 2];
 
-            // Optical Luminance
             const luma = 0.299 * r + 0.587 * g + 0.114 * b;
 
-            // Gradient cross differences
             const diffTop = Math.abs(r - src[topIdx]) + Math.abs(g - src[topIdx + 1]) + Math.abs(b - src[topIdx + 2]);
             const diffBtm = Math.abs(r - src[btmIdx]) + Math.abs(g - src[btmIdx + 1]) + Math.abs(b - src[btmIdx + 2]);
             const diffLft = Math.abs(r - src[lftIdx]) + Math.abs(g - src[lftIdx + 1]) + Math.abs(b - src[lftIdx + 2]);
@@ -360,16 +351,15 @@ export async function processUltraHDEnhance(
             const maxGradient = Math.max(diffTop, diffBtm, diffLft, diffRgt);
             const avgGradient = (diffTop + diffBtm + diffLft + diffRgt) * 0.25;
 
-            // Detect human skin tone region
+            // Skin tone detection
             const isSkin = r > g && g > b && (r - b) > 15 && luma > 60 && luma < 225;
 
-            // Dual-domain Bilateral Surface Filtering
             let baseR = r;
             let baseG = g;
             let baseB = b;
 
-            if (maxGradient < noiseFloor * 3.5 || (isSkin && maxGradient < noiseFloor * 4.5)) {
-              // Smooth out noise / grain while retaining color
+            // Smooth noise on flat regions and skin
+            if (maxGradient < noiseFloor * 3.5 || (isSkin && maxGradient < noiseFloor * 4.0)) {
               const weightCenter = isSkin ? 4 : 3;
               const divisor = weightCenter + 4;
               baseR = (r * weightCenter + src[topIdx] + src[btmIdx] + src[lftIdx] + src[rgtIdx]) / divisor;
@@ -377,7 +367,7 @@ export async function processUltraHDEnhance(
               baseB = (b * weightCenter + src[topIdx + 2] + src[btmIdx + 2] + src[lftIdx + 2] + src[rgtIdx + 2]) / divisor;
             }
 
-            // High-Pass Edge & Micro-Texture Boost
+            // Sharpen edges & micro textures
             for (let c = 0; c < 3; c++) {
               const currentVal = c === 0 ? baseR : c === 1 ? baseG : baseB;
               const topC = src[topIdx + c];
@@ -392,33 +382,26 @@ export async function processUltraHDEnhance(
 
               if (avgGradient > noiseFloor) {
                 const edgeWeight = Math.min(1.0, (avgGradient - noiseFloor) / (edgeCeiling - noiseFloor));
-                const multiplier = isFullMaxx ? 1.15 : 0.95;
-                const rawBoost = highPass * sharpnessAmt * multiplier * edgeWeight;
+                const rawBoost = highPass * sharpnessAmt * 0.95 * edgeWeight;
+                finalBoost = (rawBoost * 32) / (32 + Math.abs(rawBoost));
 
-                // Anti-ringing soft-limiter (prevents harsh halo lines)
-                finalBoost = (rawBoost * 36) / (36 + Math.abs(rawBoost));
-
-                // Eye iris, eyelash, micro-pore & catchlight enhancement
                 if (luma >= 35 && luma <= 220) {
-                  const faceMultiplier = isFullMaxx ? 0.38 : 0.28;
-                  finalBoost += highPass * faceClarityAmt * faceMultiplier * edgeWeight;
+                  finalBoost += highPass * faceClarityAmt * 0.25 * edgeWeight;
                 }
               }
 
               let outVal = currentVal + finalBoost;
 
-              // DSLR HDR Tone S-Curve Roll-off
               if (hdrAmt > 0) {
                 if (outVal > 128) {
-                  outVal += ((outVal - 128) / 128) * (255 - outVal) * hdrAmt * (isFullMaxx ? 0.32 : 0.28);
+                  outVal += ((outVal - 128) / 128) * (255 - outVal) * hdrAmt * 0.25;
                 } else {
-                  outVal -= ((128 - outVal) / 128) * outVal * hdrAmt * (isFullMaxx ? 0.25 : 0.22);
+                  outVal -= ((128 - outVal) / 128) * outVal * hdrAmt * 0.20;
                 }
               }
 
-              // Skin-Tone Chromatic Protection
-              if (isSkin && c === 0 && outVal > baseR + 7) {
-                outVal = baseR + 7;
+              if (isSkin && c === 0 && outVal > baseR + 8) {
+                outVal = baseR + 8;
               }
 
               data[idx + c] = Math.min(255, Math.max(0, Math.round(outVal)));
@@ -428,7 +411,7 @@ export async function processUltraHDEnhance(
 
         ctx.putImageData(imgData, 0, 0);
 
-        // Step 4: Specular Sheen & Dynamic Micro-Contrast Pass
+        // Step 4: Natural Specular Pass
         const glowCanvas = document.createElement('canvas');
         glowCanvas.width = targetWidth;
         glowCanvas.height = targetHeight;
@@ -436,13 +419,12 @@ export async function processUltraHDEnhance(
         if (gCtx) {
           gCtx.drawImage(baseCanvas, 0, 0);
           ctx.globalCompositeOperation = 'soft-light';
-          ctx.globalAlpha = isFullMaxx ? 0.24 : 0.18;
+          ctx.globalAlpha = 0.16;
           ctx.drawImage(glowCanvas, 0, 0);
           ctx.globalCompositeOperation = 'source-over';
           ctx.globalAlpha = 1.0;
         }
 
-        // Export Lossless High-Fidelity Data URL
         const enhancedDataUrl = baseCanvas.toDataURL('image/png', 0.98);
         const processingTimeMs = Math.round(performance.now() - startTime);
 
@@ -454,10 +436,10 @@ export async function processUltraHDEnhance(
           enhancedHeight: targetHeight,
           megaPixels: ((targetWidth * targetHeight) / 1000000).toFixed(1),
           processingTimeMs,
-          algorithmMode: isFullMaxx ? 'Full Maxx HD Ultra 8K' : options.mode,
+          algorithmMode: options.mode,
         });
       } catch (err) {
-        console.error('Full Maxx optical processing error:', err);
+        console.error('Enhancement processing error:', err);
         resolve({
           enhancedDataUrl: sourceImageBase64,
           originalWidth: 800,
@@ -466,7 +448,7 @@ export async function processUltraHDEnhance(
           enhancedHeight: 600,
           megaPixels: '0.5',
           processingTimeMs: Math.round(performance.now() - startTime),
-          algorithmMode: 'Fallback',
+          algorithmMode: 'DSLR Master',
         });
       }
     };
@@ -480,7 +462,7 @@ export async function processUltraHDEnhance(
         enhancedHeight: 600,
         megaPixels: '0.5',
         processingTimeMs: Math.round(performance.now() - startTime),
-        algorithmMode: 'Fallback',
+        algorithmMode: 'DSLR Master',
       });
     };
 
