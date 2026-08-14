@@ -10,6 +10,7 @@ import {
   Maximize2,
   Sliders,
   Camera,
+  Flame,
 } from 'lucide-react';
 import { processUltraHDEnhance, UltraEnhanceOptions } from '../utils/reminiEnhancer';
 import { ReminiComparisonViewer } from './ReminiComparisonViewer';
@@ -24,11 +25,11 @@ export const ImageEnhancerStudio: React.FC = () => {
   const [aiEditMessage, setAiEditMessage] = useState<string | null>(null);
   const [enhancedResultUrl, setEnhancedResultUrl] = useState<string | null>(null);
   const [enhancedDimensions, setEnhancedDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [enhanceStats, setEnhanceStats] = useState<{ megaPixels: string; timeMs: number } | null>(null);
-  const [enhanceMode, setEnhanceMode] = useState<UltraEnhanceOptions['mode']>('dslr-8k-master');
-  const [sharpness, setSharpness] = useState<number>(7);
+  const [enhanceStats, setEnhanceStats] = useState<{ megaPixels: string; timeMs: number; mode?: string } | null>(null);
+  const [enhanceMode, setEnhanceMode] = useState<UltraEnhanceOptions['mode']>('full-maxx-ultra-8k');
+  const [sharpness, setSharpness] = useState<number>(8);
   const [hdrExposure, setHdrExposure] = useState<number>(3);
-  const [faceClarity, setFaceClarity] = useState<number>(4);
+  const [faceClarity, setFaceClarity] = useState<number>(5);
   const [denoiseStrength, setDenoiseStrength] = useState<number>(4);
   const [resolutionTarget, setResolutionTarget] = useState<'original' | '2k' | '4k' | '8k'>('original');
 
@@ -87,7 +88,7 @@ export const ImageEnhancerStudio: React.FC = () => {
     }
   };
 
-  // Ultra HD 8K Reconstruction
+  // Full Maxx Ultra HD 8K Reconstruction
   const handleProcessEnhanceImage = async () => {
     if (!enhancerImage || isEnhancingImage) return;
     setIsEnhancingImage(true);
@@ -103,8 +104,8 @@ export const ImageEnhancerStudio: React.FC = () => {
 
       setEnhancedResultUrl(result.enhancedDataUrl);
       setEnhancedDimensions({ width: result.enhancedWidth, height: result.enhancedHeight });
-      setEnhanceStats({ megaPixels: result.megaPixels, timeMs: result.processingTimeMs });
-      setAiEditMessage('DSLR 8K Reconstruction complete (Zero Pixel Tearing)');
+      setEnhanceStats({ megaPixels: result.megaPixels, timeMs: result.processingTimeMs, mode: result.algorithmMode });
+      setAiEditMessage('🔥 Full Maxx HD Ultra 8K Enhancement Complete (Zero Pixel Tearing)');
     } catch (err) {
       console.error('Enhancement error:', err);
       setEnhancedResultUrl(enhancerImage);
@@ -113,7 +114,7 @@ export const ImageEnhancerStudio: React.FC = () => {
     }
   };
 
-  // Prompt-Based AI Image Modification & Enhancement
+  // Prompt-Based AI Image Modification & Super-Enhancement
   const handleAIImagePromptEdit = async (customPromptToUse?: string) => {
     const promptToExecute = (customPromptToUse !== undefined ? customPromptToUse : imageEditPrompt).trim();
     if (!enhancerImage && !promptToExecute) return;
@@ -126,7 +127,7 @@ export const ImageEnhancerStudio: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageBase64: enhancerImage,
-          prompt: promptToExecute || 'Clear face, enhance lighting, remove noise',
+          prompt: promptToExecute || 'Full Maxx 8K Ultra, clear face, smooth skin, sharp eyes, cinematic lighting',
           mode: enhanceMode,
           aspectRatio: '16:9',
         }),
@@ -147,13 +148,13 @@ export const ImageEnhancerStudio: React.FC = () => {
 
         setEnhancedResultUrl(upscaled.enhancedDataUrl);
         setEnhancedDimensions({ width: upscaled.enhancedWidth, height: upscaled.enhancedHeight });
-        setEnhanceStats({ megaPixels: upscaled.megaPixels, timeMs: upscaled.processingTimeMs });
-        setAiEditMessage(data?.summary || `AI Request applied: "${promptToExecute || 'DSLR Clarity'}"`);
+        setEnhanceStats({ megaPixels: upscaled.megaPixels, timeMs: upscaled.processingTimeMs, mode: upscaled.algorithmMode });
+        setAiEditMessage(data?.summary || `Full Maxx HD applied: "${promptToExecute || '8K Ultra Clarity'}"`);
       }
     } catch (err: any) {
       console.warn('AI image edit fallback to optical reconstruction:', err);
       await handleProcessEnhanceImage();
-      setAiEditMessage(`Enhanced with optical parameters for: "${promptToExecute || 'DSLR Clarity'}"`);
+      setAiEditMessage(`Full Maxx HD Enhanced with optical parameters for: "${promptToExecute || '8K Ultra Clarity'}"`);
     } finally {
       setIsAIEditingImage(false);
     }
@@ -165,13 +166,13 @@ export const ImageEnhancerStudio: React.FC = () => {
       <div className="text-center space-y-2.5 max-w-3xl mx-auto">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-semibold shadow-lg shadow-emerald-950/40">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>100% Free AI Image Enhancer • Zero Credit Limit • Original Frame Preserved</span>
+          <span>Full Maxx HD Ultra 8K Engine • Zero Pixel Tearing • 100% Uncropped Frame Size</span>
         </div>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif text-white tracking-tight leading-tight">
-          Enhance Photos to <span className="bg-gradient-to-r from-amber-400 via-rose-400 to-emerald-400 bg-clip-text text-transparent">8K Ultra HD</span>
+          Enhance Photos to <span className="bg-gradient-to-r from-amber-400 via-rose-400 to-emerald-400 bg-clip-text text-transparent">Full Maxx HD Ultra 8K</span>
         </h1>
         <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed font-sans max-w-2xl mx-auto">
-          Upload any photo to remove blur, smooth skin, sharpen eyes, and enhance to 8K resolution with 100% uncropped original frame size & zero pixel tearing.
+          Normal blur photo ko crystal-clear 8K Ultra HD me convert karein. Skin smooth, natural micro-pores, crystal sharp iris, zero noise aur uncropped exact frame size.
         </p>
       </div>
 
@@ -305,13 +306,15 @@ export const ImageEnhancerStudio: React.FC = () => {
               </span>
               <h3 className="text-xs sm:text-sm font-bold text-emerald-300 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>ENHANCED AFTER RESULT (8K Ultra Output & Remini Split Comparison)</span>
+                <span>FULL MAXX HD ENHANCED RESULT (8K Ultra Output & Remini Split Comparison)</span>
               </h3>
             </div>
 
             {enhanceStats && (
               <div className="flex items-center gap-2 text-xs font-mono text-neutral-300 bg-neutral-950 px-3 py-1.5 rounded-xl border border-neutral-800">
                 <span className="text-emerald-400 font-bold">{enhanceStats.megaPixels} Megapixels</span>
+                <span>•</span>
+                <span className="text-amber-400 font-semibold">{enhanceStats.mode || 'Full Maxx 8K'}</span>
                 <span>•</span>
                 <span>{enhanceStats.timeMs}ms</span>
               </div>
@@ -331,13 +334,13 @@ export const ImageEnhancerStudio: React.FC = () => {
           ) : (
             <div className="bg-neutral-950/70 border border-neutral-850 rounded-xl p-8 sm:p-10 text-center text-neutral-400">
               <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-emerald-400" />
+                <Flame className="w-6 h-6 text-amber-400" />
               </div>
               <p className="text-sm font-bold text-neutral-200">
-                Enhanced Result Yahan Upar Dikhega
+                Full Maxx HD Ultra Enhanced Result Yahan Upar Dikhega
               </p>
               <p className="text-xs text-neutral-400 mt-1 max-w-md mx-auto">
-                Neeche di gayi customized settings adjust karke <strong className="text-emerald-400">&apos;⚡ Enhance Image to 8K Ultra HD&apos;</strong> button dabayein.
+                Neeche di gayi customized settings adjust karke <strong className="text-emerald-400">&apos;⚡ Enhance Image to Full Maxx HD Ultra 8K&apos;</strong> button dabayein.
               </p>
             </div>
           )}
@@ -351,20 +354,20 @@ export const ImageEnhancerStudio: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-neutral-800">
           <div className="flex items-center gap-2.5">
             <span className="w-6 h-6 rounded-lg bg-gradient-to-r from-amber-500 to-rose-500 text-neutral-950 text-xs font-black flex items-center justify-center shadow-md">
-              ⚙️
+              ⚡
             </span>
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-1.5">
                 <Sliders className="w-4 h-4 text-amber-400" />
-                <span>CUSTOMIZED STUDIO SETTINGS & AI PROMPT RETOUCHER</span>
+                <span>FULL MAXX HD ALGORITHM CONTROLS & AI PROMPT RETOUCHER</span>
               </h3>
               <p className="text-[11px] text-neutral-400">
-                Photo me kya badalna ya enhance karna hai customize karein:
+                Normal photo ko ultra crisp HD me enhance karne ke liye customize karein:
               </p>
             </div>
           </div>
-          <span className="text-[10px] text-neutral-400 bg-neutral-950 px-2.5 py-1 rounded-full border border-neutral-800">
-            Prompt Instructions + Optical Controls
+          <span className="text-[10px] text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40 font-semibold">
+            5-Stage Neural Optical Pipeline
           </span>
         </div>
 
@@ -383,7 +386,7 @@ export const ImageEnhancerStudio: React.FC = () => {
               rows={2}
               value={imageEditPrompt}
               onChange={(e) => setImageEditPrompt(e.target.value)}
-              placeholder="Photo me kya change ya enhance karna hai? Jaise: Chehra saaf karo aur skin smooth karo, background ke unwanted objects hatao, golden hour sunset lighting dalo, aankhein sharp karo..."
+              placeholder="Photo me kya change ya enhance karna hai? Jaise: Full Maxx HD clarity, chehra saaf karo aur skin smooth karo, background ke unwanted objects hatao, golden sunset lighting dalo, aankhein sharp karo..."
               className="w-full bg-neutral-950 border border-neutral-800 focus:border-amber-500 rounded-xl p-3.5 text-xs sm:text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all resize-none font-sans"
               disabled={isAIEditingImage || isEnhancingImage}
             />
@@ -406,6 +409,7 @@ export const ImageEnhancerStudio: React.FC = () => {
           </span>
           <div className="flex flex-wrap gap-1.5">
             {[
+              { label: '🔥 Full Maxx 8K Ultra Detail', prompt: 'Full Maxx 8K Ultra High Definition clarity, razor sharp details, smooth skin, crystal eyes, zero noise' },
               { label: '💎 Clear Face & Smooth Skin', prompt: 'Ultra clear face, smooth natural skin texture, remove acne and blemishes, high definition eyes' },
               { label: '❌ Remove Background Objects', prompt: 'Clean background, remove distracting background objects and photobombers, soft depth blur' },
               { label: '🌅 Golden Hour Sunset Light', prompt: 'Add warm golden hour sunset lighting, soft sun flare, cinematic warmth, dramatic contrast' },
@@ -413,7 +417,6 @@ export const ImageEnhancerStudio: React.FC = () => {
               { label: '🎬 35mm Cinema Bokeh', prompt: 'Cinematic 35mm film lens look, smooth creamy background bokeh, rich dynamic range' },
               { label: '⚡ Ultra Denoise & Clean Blur', prompt: 'Remove all digital noise and compression artifacts, fix motion blur, razor sharp edges' },
               { label: '🕰️ Old Photo Restoration', prompt: 'Restore old photo, fix scratches, restore faded colors, enhance facial features to 8K resolution' },
-              { label: '👑 Royal High Fashion Tone', prompt: 'Studio Vogue fashion magazine lighting, elegant skin tone, vibrant color grading' },
             ].map((chip) => (
               <button
                 key={chip.label}
@@ -509,15 +512,16 @@ export const ImageEnhancerStudio: React.FC = () => {
           </div>
         </div>
 
-        {/* Enhancer Mode Preset Grid (Compact Chips) */}
+        {/* Enhancer Mode Preset Grid (Compact Chips with Full Maxx HD Flagship) */}
         <div className="space-y-1.5">
           <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider block">
             Enhancement Presets:
           </span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1.5">
             {[
-              { id: 'dslr-8k-master', label: '📸 DSLR Master', sharpness: 7, hdr: 3, clarity: 4, denoise: 4 },
-              { id: 'remini-face-studio', label: '💎 Remini Face', sharpness: 6, hdr: 3, clarity: 5, denoise: 4 },
+              { id: 'full-maxx-ultra-8k', label: '🔥 Full Maxx 8K', sharpness: 9, hdr: 4, clarity: 5, denoise: 4, highlight: true },
+              { id: 'dslr-8k-master', label: '📸 DSLR Master', sharpness: 8, hdr: 3, clarity: 4, denoise: 4 },
+              { id: 'remini-face-studio', label: '💎 Remini Face', sharpness: 7, hdr: 3, clarity: 5, denoise: 4 },
               { id: 'hasselblad-ultra', label: '🎥 Hasselblad', sharpness: 8, hdr: 4, clarity: 4, denoise: 3 },
               { id: 'cinema-prime', label: '🎬 Cinema 50mm', sharpness: 7, hdr: 4, clarity: 4, denoise: 4 },
               { id: 'zero-artifact-clean', label: '⚡ Zero Artifact', sharpness: 7, hdr: 2, clarity: 3, denoise: 5 },
@@ -535,9 +539,13 @@ export const ImageEnhancerStudio: React.FC = () => {
                     setFaceClarity(preset.clarity);
                     setDenoiseStrength(preset.denoise);
                   }}
-                  className={`py-1.5 px-2 rounded-lg border text-center text-xs font-semibold transition-all cursor-pointer truncate ${
+                  className={`py-1.5 px-2 rounded-lg border text-center text-xs font-bold transition-all cursor-pointer truncate ${
                     isActive
-                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-500/40 shadow-sm'
+                      ? preset.highlight
+                        ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-neutral-950 border-amber-400 shadow-md ring-1 ring-amber-400 font-black'
+                        : 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-500/40 shadow-sm'
+                      : preset.highlight
+                      ? 'bg-neutral-950 border-amber-500/40 text-amber-300 hover:border-amber-400'
                       : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
                   }`}
                 >
@@ -552,7 +560,7 @@ export const ImageEnhancerStudio: React.FC = () => {
         <div className="bg-neutral-950 p-3.5 rounded-xl border border-neutral-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-neutral-400">Sharpness:</span>
+              <span className="text-neutral-400">Micro-Detail Sharpness:</span>
               <span className="text-amber-400 font-mono font-bold">{sharpness}/10</span>
             </div>
             <input
@@ -567,7 +575,7 @@ export const ImageEnhancerStudio: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-neutral-400">HDR Tone Exposure:</span>
+              <span className="text-neutral-400">CLAHE HDR Dynamic Depth:</span>
               <span className="text-amber-400 font-mono font-bold">{hdrExposure}/5</span>
             </div>
             <input
@@ -582,7 +590,7 @@ export const ImageEnhancerStudio: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-neutral-400">Face & Eye Clarity:</span>
+              <span className="text-neutral-400">Face & Iris Catchlight Clarity:</span>
               <span className="text-amber-400 font-mono font-bold">{faceClarity}/5</span>
             </div>
             <input
@@ -597,7 +605,7 @@ export const ImageEnhancerStudio: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-neutral-400">Denoise Strength:</span>
+              <span className="text-neutral-400">Bilateral Chroma Denoise:</span>
               <span className="text-amber-400 font-mono font-bold">{denoiseStrength}/5</span>
             </div>
             <input
@@ -631,12 +639,12 @@ export const ImageEnhancerStudio: React.FC = () => {
           {isEnhancingImage || isAIEditingImage ? (
             <>
               <div className="w-5 h-5 border-2 border-neutral-950/30 border-t-neutral-950 rounded-full animate-spin" />
-              <span>Processing 8K Ultra HD Enhancement...</span>
+              <span>Processing Full Maxx HD Ultra 8K Enhancement...</span>
             </>
           ) : (
             <>
               <Sparkles className="w-5 h-5 text-neutral-950 fill-neutral-950" />
-              <span>⚡ Enhance Image to 8K Ultra HD (Zero Pixel Tearing)</span>
+              <span>⚡ Enhance Image to Full Maxx HD Ultra 8K (Zero Pixel Tearing)</span>
             </>
           )}
         </button>
