@@ -39,20 +39,56 @@ export interface EnhanceResult {
 /**
  * Universal safe Blob download utility for 8K / 4K images
  */
+/**
+ * Helper to convert data URL to requested format (e.g. PNG to JPEG or vice versa) via Canvas
+ */
+export function convertDataUrlFormat(dataUrl: string, targetFormat: 'png' | 'jpeg'): Promise<string> {
+  return new Promise((resolve) => {
+    if (!dataUrl.startsWith('data:')) {
+      return resolve(dataUrl);
+    }
+    const currentMime = (dataUrl.split(';')[0] || '').replace('data:', '');
+    const targetMime = targetFormat === 'jpeg' ? 'image/jpeg' : 'image/png';
+    if (currentMime === targetMime) {
+      return resolve(dataUrl);
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width || 800;
+      canvas.height = img.naturalHeight || img.height || 600;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return resolve(dataUrl);
+
+      if (targetFormat === 'jpeg') {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL(targetMime, 0.95));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export function downloadEnhancedImage(
   dataUrlOrSrc: string,
   customFilename?: string,
   format: 'png' | 'jpeg' = 'png'
 ): Promise<boolean> {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     try {
+      const formattedDataUrl = await convertDataUrlFormat(dataUrlOrSrc, format);
       const filename =
         customFilename ||
         `enhanced_8k_photo_${Date.now()}.${format}`;
 
-      if (dataUrlOrSrc.startsWith('data:')) {
-        const parts = dataUrlOrSrc.split(';base64,');
-        const contentType = format === 'jpeg' ? 'image/jpeg' : (parts[0].split(':')[1] || 'image/png');
+      if (formattedDataUrl.startsWith('data:')) {
+        const parts = formattedDataUrl.split(';base64,');
+        const contentType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
         const byteCharacters = atob(parts[1]);
         const byteArrays: Uint8Array[] = [];
 
@@ -85,7 +121,7 @@ export function downloadEnhancedImage(
         }, 1500);
       } else {
         const link = document.createElement('a');
-        link.href = dataUrlOrSrc;
+        link.href = formattedDataUrl;
         link.download = filename;
         link.target = '_blank';
         link.rel = 'noreferrer noopener';
@@ -131,7 +167,8 @@ export function downloadEnhancedImage(
  */
 export async function copyImageToClipboard(dataUrl: string): Promise<boolean> {
   try {
-    const parts = dataUrl.split(';base64,');
+    const pngDataUrl = await convertDataUrlFormat(dataUrl, 'png');
+    const parts = pngDataUrl.split(';base64,');
     const raw = atob(parts[1]);
     const uInt8Array = new Uint8Array(raw.length);
     for (let i = 0; i < raw.length; ++i) {
@@ -306,7 +343,7 @@ export async function processUltraHDEnhance(
         const toneCanvas = document.createElement('canvas');
         toneCanvas.width = targetWidth;
         toneCanvas.height = targetHeight;
-        const tCtx = toneCanvas.getContext('2d')!;
+        const tCtx = toneCanvas.getContext('2d', { willReadFrequently: true })!;
         tCtx.filter = `contrast(${contrastVal}) brightness(${brightnessVal}) saturate(${saturateVal})`;
         tCtx.drawImage(baseCanvas, 0, 0);
 
@@ -324,6 +361,7 @@ export async function processUltraHDEnhance(
 
         const noiseFloor = 14 + (1 - denoiseAmt) * 5;
         const edgeCeiling = 50;
+        const invEdgeRange = 1 / (edgeCeiling - noiseFloor);
 
         for (let y = 1; y < h - 1; y++) {
           const rowOffset = y * w * 4;
@@ -331,11 +369,11 @@ export async function processUltraHDEnhance(
           const btmRowOffset = (y + 1) * w * 4;
 
           for (let x = 1; x < w - 1; x++) {
-            const idx = rowOffset + x * 4;
-            const topIdx = topRowOffset + x * 4;
-            const btmIdx = btmRowOffset + x * 4;
-            const lftIdx = rowOffset + (x - 1) * 4;
-            const rgtIdx = rowOffset + (x + 1) * 4;
+            const idx = rowOffset + (x << 2);
+            const topIdx = topRowOffset + (x << 2);
+            const btmIdx = btmRowOffset + (x << 2);
+            const lftIdx = rowOffset + ((x - 1) << 2);
+            const rgtIdx = rowOffset + ((x + 1) << 2);
 
             const r = src[idx];
             const g = src[idx + 1];
@@ -361,10 +399,10 @@ export async function processUltraHDEnhance(
             // Smooth noise on flat regions and skin
             if (maxGradient < noiseFloor * 3.5 || (isSkin && maxGradient < noiseFloor * 4.0)) {
               const weightCenter = isSkin ? 4 : 3;
-              const divisor = weightCenter + 4;
-              baseR = (r * weightCenter + src[topIdx] + src[btmIdx] + src[lftIdx] + src[rgtIdx]) / divisor;
-              baseG = (g * weightCenter + src[topIdx + 1] + src[btmIdx + 1] + src[lftIdx + 1] + src[rgtIdx + 1]) / divisor;
-              baseB = (b * weightCenter + src[topIdx + 2] + src[btmIdx + 2] + src[lftIdx + 2] + src[rgtIdx + 2]) / divisor;
+              const divisor = 1 / (weightCenter + 4);
+              baseR = (r * weightCenter + src[topIdx] + src[btmIdx] + src[lftIdx] + src[rgtIdx]) * divisor;
+              baseG = (g * weightCenter + src[topIdx + 1] + src[btmIdx + 1] + src[lftIdx + 1] + src[rgtIdx + 1]) * divisor;
+              baseB = (b * weightCenter + src[topIdx + 2] + src[btmIdx + 2] + src[lftIdx + 2] + src[rgtIdx + 2]) * divisor;
             }
 
             // Sharpen edges & micro textures
@@ -381,7 +419,7 @@ export async function processUltraHDEnhance(
               let finalBoost = 0;
 
               if (avgGradient > noiseFloor) {
-                const edgeWeight = Math.min(1.0, (avgGradient - noiseFloor) / (edgeCeiling - noiseFloor));
+                const edgeWeight = Math.min(1.0, (avgGradient - noiseFloor) * invEdgeRange);
                 const rawBoost = highPass * sharpnessAmt * 0.95 * edgeWeight;
                 finalBoost = (rawBoost * 32) / (32 + Math.abs(rawBoost));
 
@@ -404,7 +442,7 @@ export async function processUltraHDEnhance(
                 outVal = baseR + 8;
               }
 
-              data[idx + c] = Math.min(255, Math.max(0, Math.round(outVal)));
+              data[idx + c] = outVal > 255 ? 255 : outVal < 0 ? 0 : (outVal + 0.5) | 0;
             }
           }
         }

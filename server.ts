@@ -252,9 +252,9 @@ Preserve natural human anatomy, realistic skin textures, sharp eye details, and 
         const parts: any[] = [{ text: instructionText }];
 
         if (imageBase64 && imageBase64.startsWith('data:')) {
-          const mimeMatch = imageBase64.match(/^data:(image\/\w+);base64,/);
+          const mimeMatch = imageBase64.match(/^data:(.*?);base64,/);
           const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-          const rawBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+          const rawBase64 = imageBase64.replace(/^data:.*?;base64,/, '');
           parts.push({
             inlineData: {
               mimeType,
@@ -347,9 +347,9 @@ app.post('/api/enhance-image', async (req, res) => {
 
         const parts: any[] = [{ text: textPrompt }];
         if (imageBase64 && imageBase64.startsWith('data:')) {
-          const mimeMatch = imageBase64.match(/^data:(image\/\w+);base64,/);
+          const mimeMatch = imageBase64.match(/^data:(.*?);base64,/);
           const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-          const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+          const cleanBase64 = imageBase64.replace(/^data:.*?;base64,/, '');
           parts.push({
             inlineData: {
               mimeType,

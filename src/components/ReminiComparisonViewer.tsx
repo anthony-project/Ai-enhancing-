@@ -73,13 +73,25 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
 
   useEffect(() => {
     const handleGlobalMouseUp = () => setIsDragging(false);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      } else if (e.key === 'ArrowLeft' && viewMode === 'split') {
+        setSliderPosition((prev) => Math.max(0, prev - 5));
+      } else if (e.key === 'ArrowRight' && viewMode === 'split') {
+        setSliderPosition((prev) => Math.min(100, prev + 5));
+      }
+    };
+
     window.addEventListener('mouseup', handleGlobalMouseUp);
     window.addEventListener('touchend', handleGlobalMouseUp);
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('mouseup', handleGlobalMouseUp);
       window.removeEventListener('touchend', handleGlobalMouseUp);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isFullscreen, viewMode]);
 
   // Close download menu on click outside
   useEffect(() => {
@@ -261,9 +273,15 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
         {viewMode === 'split' && (
           <div
             ref={containerRef}
-            onMouseDown={() => setIsDragging(true)}
+            onMouseDown={(e) => {
+              setIsDragging(true);
+              handleMove(e.clientX);
+            }}
             onMouseMove={handleMouseMove}
-            onTouchStart={() => setIsDragging(true)}
+            onTouchStart={(e) => {
+              setIsDragging(true);
+              if (e.touches[0]) handleMove(e.touches[0].clientX);
+            }}
             onTouchMove={handleTouchMove}
             className="relative w-full h-full cursor-ew-resize overflow-hidden flex items-center justify-center"
           >

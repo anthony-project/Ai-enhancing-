@@ -65,41 +65,48 @@ export function speakNarration({
   utterance.lang = langMap[language] || 'en-US';
 
   // Try finding a matching voice with gender preference
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    const targetLangPrefix = utterance.lang.split('-')[0];
-    const matchingVoices = voices.filter(
-      (v) => v.lang.startsWith(targetLangPrefix) || v.lang.includes(targetLangPrefix)
-    );
+  const selectVoice = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const targetLangPrefix = utterance.lang.split('-')[0];
+      const matchingVoices = voices.filter(
+        (v) => v.lang.startsWith(targetLangPrefix) || v.lang.includes(targetLangPrefix)
+      );
 
-    if (matchingVoices.length > 0) {
-      if (voiceGender === 'Female') {
-        const femaleVoice = matchingVoices.find(
-          (v) =>
-            v.name.toLowerCase().includes('female') ||
-            v.name.toLowerCase().includes('zira') ||
-            v.name.toLowerCase().includes('samantha') ||
-            v.name.toLowerCase().includes('lekha') ||
-            v.name.toLowerCase().includes('heera') ||
-            v.name.toLowerCase().includes('kavya') ||
-            v.name.toLowerCase().includes('victoria') ||
-            v.name.toLowerCase().includes('karen')
-        );
-        utterance.voice = femaleVoice || matchingVoices[0];
-      } else {
-        const maleVoice = matchingVoices.find(
-          (v) =>
-            v.name.toLowerCase().includes('male') ||
-            v.name.toLowerCase().includes('david') ||
-            v.name.toLowerCase().includes('george') ||
-            v.name.toLowerCase().includes('ravi') ||
-            v.name.toLowerCase().includes('alex') ||
-            v.name.toLowerCase().includes('guy') ||
-            v.name.toLowerCase().includes('daniel')
-        );
-        utterance.voice = maleVoice || matchingVoices[0];
+      if (matchingVoices.length > 0) {
+        if (voiceGender === 'Female') {
+          const femaleVoice = matchingVoices.find(
+            (v) =>
+              v.name.toLowerCase().includes('female') ||
+              v.name.toLowerCase().includes('zira') ||
+              v.name.toLowerCase().includes('samantha') ||
+              v.name.toLowerCase().includes('lekha') ||
+              v.name.toLowerCase().includes('heera') ||
+              v.name.toLowerCase().includes('kavya') ||
+              v.name.toLowerCase().includes('victoria') ||
+              v.name.toLowerCase().includes('karen')
+          );
+          utterance.voice = femaleVoice || matchingVoices[0];
+        } else {
+          const maleVoice = matchingVoices.find(
+            (v) =>
+              v.name.toLowerCase().includes('male') ||
+              v.name.toLowerCase().includes('david') ||
+              v.name.toLowerCase().includes('george') ||
+              v.name.toLowerCase().includes('ravi') ||
+              v.name.toLowerCase().includes('alex') ||
+              v.name.toLowerCase().includes('guy') ||
+              v.name.toLowerCase().includes('daniel')
+          );
+          utterance.voice = maleVoice || matchingVoices[0];
+        }
       }
     }
+  };
+
+  selectVoice();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = selectVoice;
   }
 
   utterance.onend = () => {
