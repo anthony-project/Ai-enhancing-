@@ -203,7 +203,11 @@ export const ImageEnhancerStudio: React.FC = () => {
       {/* ============================================================ */}
       <div className="space-y-4">
         {/* BOX 1: UPLOADED ORIGINAL PHOTO */}
-        <div className="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          className="bg-neutral-900/90 border border-neutral-800 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-neutral-800">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-black flex items-center justify-center">

@@ -261,9 +261,15 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
         {viewMode === 'split' && (
           <div
             ref={containerRef}
-            onMouseDown={() => setIsDragging(true)}
+            onMouseDown={(e) => {
+              setIsDragging(true);
+              handleMove(e.clientX);
+            }}
             onMouseMove={handleMouseMove}
-            onTouchStart={() => setIsDragging(true)}
+            onTouchStart={(e) => {
+              setIsDragging(true);
+              if (e.touches[0]) handleMove(e.touches[0].clientX);
+            }}
             onTouchMove={handleTouchMove}
             className="relative w-full h-full cursor-ew-resize overflow-hidden flex items-center justify-center"
           >

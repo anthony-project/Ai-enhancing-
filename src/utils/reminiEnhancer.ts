@@ -39,20 +39,56 @@ export interface EnhanceResult {
 /**
  * Universal safe Blob download utility for 8K / 4K images
  */
+/**
+ * Helper to convert data URL to requested format (e.g. PNG to JPEG or vice versa) via Canvas
+ */
+export function convertDataUrlFormat(dataUrl: string, targetFormat: 'png' | 'jpeg'): Promise<string> {
+  return new Promise((resolve) => {
+    if (!dataUrl.startsWith('data:')) {
+      return resolve(dataUrl);
+    }
+    const currentMime = (dataUrl.split(';')[0] || '').replace('data:', '');
+    const targetMime = targetFormat === 'jpeg' ? 'image/jpeg' : 'image/png';
+    if (currentMime === targetMime) {
+      return resolve(dataUrl);
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width || 800;
+      canvas.height = img.naturalHeight || img.height || 600;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(dataUrl);
+
+      if (targetFormat === 'jpeg') {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL(targetMime, 0.95));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export function downloadEnhancedImage(
   dataUrlOrSrc: string,
   customFilename?: string,
   format: 'png' | 'jpeg' = 'png'
 ): Promise<boolean> {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     try {
+      const formattedDataUrl = await convertDataUrlFormat(dataUrlOrSrc, format);
       const filename =
         customFilename ||
         `enhanced_8k_photo_${Date.now()}.${format}`;
 
-      if (dataUrlOrSrc.startsWith('data:')) {
-        const parts = dataUrlOrSrc.split(';base64,');
-        const contentType = format === 'jpeg' ? 'image/jpeg' : (parts[0].split(':')[1] || 'image/png');
+      if (formattedDataUrl.startsWith('data:')) {
+        const parts = formattedDataUrl.split(';base64,');
+        const contentType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
         const byteCharacters = atob(parts[1]);
         const byteArrays: Uint8Array[] = [];
 
@@ -85,7 +121,7 @@ export function downloadEnhancedImage(
         }, 1500);
       } else {
         const link = document.createElement('a');
-        link.href = dataUrlOrSrc;
+        link.href = formattedDataUrl;
         link.download = filename;
         link.target = '_blank';
         link.rel = 'noreferrer noopener';
@@ -131,7 +167,8 @@ export function downloadEnhancedImage(
  */
 export async function copyImageToClipboard(dataUrl: string): Promise<boolean> {
   try {
-    const parts = dataUrl.split(';base64,');
+    const pngDataUrl = await convertDataUrlFormat(dataUrl, 'png');
+    const parts = pngDataUrl.split(';base64,');
     const raw = atob(parts[1]);
     const uInt8Array = new Uint8Array(raw.length);
     for (let i = 0; i < raw.length; ++i) {
