@@ -1,5 +1,5 @@
 {
-  "name": "EnhanceAI - 8K Ultra HD Image Enhancer & Photo Studio",
+  "name": "Enhance Your Photo",
   "description": "Free AI Image Enhancer and Remini Photo Studio. Enhance photos to 8K Ultra HD with zero pixel tearing, restore old images, clear face and smooth skin, remove background objects, apply prompt-based AI image edits, and preserve 100% original frame sizes without watermark or credit limits.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
