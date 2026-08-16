@@ -93,3 +93,4 @@ export interface GenerationOptions {
   noWatermark?: boolean;
   sceneCount?: number;
 }
+

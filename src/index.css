@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+@layer base {
+  html,
+  body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overscroll-behavior-x: none !important;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #0a0a0a;
+  }
+
+  #root,
+  #enhance-ai-app {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-height: 100vh;
+  }
+
+  /* Prevent drag ghost on images */
+  img {
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+}
+

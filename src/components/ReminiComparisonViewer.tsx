@@ -15,6 +15,8 @@ import {
   Copy,
   ExternalLink,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { downloadEnhancedImage, copyImageToClipboard } from '../utils/reminiEnhancer';
 
@@ -54,6 +56,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
     (clientX: number) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
+      if (rect.width <= 0) return;
       const x = clientX - rect.left;
       const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
       setSliderPosition(percentage);
@@ -61,25 +64,29 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
     []
   );
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    handleMove(e.touches[0].clientX);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
     handleMove(e.clientX);
   };
 
-  useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    window.addEventListener('touchend', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      window.removeEventListener('touchend', handleGlobalMouseUp);
-    };
-  }, []);
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    handleMove(e.clientX);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+      setIsDragging(false);
+    }
+  };
 
   // Close download menu on click outside
   useEffect(() => {
@@ -155,19 +162,16 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
       className={`relative bg-neutral-950 border border-neutral-800/90 rounded-2xl overflow-hidden shadow-2xl transition-all ${
         isFullscreen
           ? 'fixed inset-0 z-50 rounded-none border-none flex flex-col'
-          : 'w-full my-4'
+          : 'w-full my-2'
       }`}
     >
       {/* Top Toolbar */}
-      <div className="flex flex-wrap items-center justify-between px-4 py-3 bg-neutral-900/95 border-b border-neutral-800 backdrop-blur-md gap-2">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5 font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            ULTRA HD 8K COMPARISON VIEWER
-          </span>
-          <span className="hidden sm:inline-block text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-medium">
-            Zero Watermark • 8K UHD
+      <div className="flex flex-wrap items-center justify-between px-3 sm:px-4 py-2.5 bg-neutral-900/95 border-b border-neutral-800 backdrop-blur-md gap-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[11px] sm:text-xs font-bold text-white tracking-wide flex items-center gap-1 font-mono">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span>8K COMPARISON</span>
           </span>
         </div>
 
@@ -176,43 +180,43 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
           <button
             type="button"
             onClick={() => setViewMode('split')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
+            className={`px-2 py-1 text-xs font-medium rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
               viewMode === 'split'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
             <Sliders className="w-3 h-3" />
-            <span className="hidden md:inline">Split Slider</span>
+            <span>Split</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('sideBySide')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
+            className={`px-2 py-1 text-xs font-medium rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
               viewMode === 'sideBySide'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
             <Columns className="w-3 h-3" />
-            <span className="hidden md:inline">Side by Side</span>
+            <span>Side</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('after')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
+            className={`px-2 py-1 text-xs font-medium rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
               viewMode === 'after'
-                ? 'bg-amber-500 text-neutral-950 font-bold shadow-sm'
+                ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
             <Eye className="w-3 h-3" />
-            <span className="hidden md:inline">8K Result Only</span>
+            <span>8K</span>
           </button>
         </div>
 
         {/* Zoom & Action Controls */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setZoomLevel((prev) => Math.max(1, +(prev - 0.5).toFixed(1)))}
@@ -221,14 +225,14 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="text-[11px] font-mono text-neutral-300 w-12 text-center font-bold">
+          <span className="text-[10px] font-mono text-neutral-300 w-10 text-center font-bold">
             {Math.round(zoomLevel * 100)}%
           </span>
           <button
             type="button"
-            onClick={() => setZoomLevel((prev) => Math.min(5.0, +(prev + 0.5).toFixed(1)))}
+            onClick={() => setZoomLevel((prev) => Math.min(4.0, +(prev + 0.5).toFixed(1)))}
             className="p-1.5 text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-all cursor-pointer"
-            title="Zoom In (Up to 500% / 100x Detail)"
+            title="Zoom In"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
@@ -238,15 +242,15 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
             className="p-1.5 text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-all cursor-pointer"
             title="Reset Zoom"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
           </button>
           <button
             type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-all ml-1 cursor-pointer"
-            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen View'}
+            className="p-1.5 text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-all cursor-pointer"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {isFullscreen ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
           </button>
         </div>
       </div>
@@ -254,30 +258,32 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
       {/* Main Interactive Stage */}
       <div
         className={`relative w-full overflow-hidden bg-neutral-950 flex items-center justify-center select-none ${
-          isFullscreen ? 'flex-1 h-full' : 'h-[380px] sm:h-[500px]'
+          isFullscreen ? 'flex-1 h-full' : 'h-[360px] sm:h-[450px]'
         }`}
       >
-        {/* VIEW MODE 1: REMINI SPLIT SLIDER */}
+        {/* VIEW MODE 1: REMINI SPLIT SLIDER WITH TOUCH-LOCK POINTER CAPTURE */}
         {viewMode === 'split' && (
           <div
             ref={containerRef}
-            onMouseDown={() => setIsDragging(true)}
-            onMouseMove={handleMouseMove}
-            onTouchStart={() => setIsDragging(true)}
-            onTouchMove={handleTouchMove}
-            className="relative w-full h-full cursor-ew-resize overflow-hidden flex items-center justify-center"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className="relative w-full h-full cursor-ew-resize overflow-hidden flex items-center justify-center select-none"
+            style={{ touchAction: 'none' }}
           >
             {/* Zoom Wrapper */}
             <div
               style={{ transform: `scale(${zoomLevel})` }}
-              className="relative w-full h-full transition-transform duration-100 flex items-center justify-center"
+              className="relative w-full h-full transition-transform duration-100 flex items-center justify-center pointer-events-none"
             >
               {/* Background Layer: Enhanced (After) Image */}
               <img
                 src={enhancedImage}
                 alt="8K Enhanced After"
                 referrerPolicy="no-referrer"
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                draggable={false}
               />
 
               {/* Foreground Layer: Original (Before) Image with clip path */}
@@ -287,38 +293,47 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
                     ? 'inset(0 0 0 0)'
                     : `inset(0 ${100 - sliderPosition}% 0 0)`,
                 }}
-                className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none"
+                className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none"
               >
                 <img
                   src={originalImage}
                   alt="Original Low-Res Before"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain filter contrast-90 brightness-95"
+                  className="w-full h-full object-contain filter contrast-90 brightness-95 pointer-events-none select-none"
+                  draggable={false}
                 />
               </div>
 
-              {/* Draggable Split Line & Handle */}
+              {/* Draggable Split Line & Handle with Clear Sliding Arrows */}
               {!isHoldingOriginal && (
                 <div
                   style={{ left: `${sliderPosition}%` }}
                   className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] pointer-events-none flex items-center justify-center z-20"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white text-neutral-900 shadow-2xl border-2 border-neutral-950 flex items-center justify-center font-bold text-xs pointer-events-auto cursor-ew-resize transform active:scale-110 transition-transform">
-                    <Sliders className="w-4 h-4 text-neutral-900" />
+                  <div
+                    className={`w-10 h-10 -ml-5 rounded-full bg-gradient-to-br from-white to-neutral-200 text-neutral-950 shadow-2xl border-2 border-neutral-900 flex items-center justify-center pointer-events-auto cursor-ew-resize select-none transition-transform ${
+                      isDragging ? 'scale-110 ring-4 ring-amber-400/50' : 'hover:scale-105'
+                    }`}
+                    style={{ touchAction: 'none' }}
+                  >
+                    <div className="flex items-center text-neutral-900 justify-center">
+                      <ChevronLeft className="w-3.5 h-3.5 -mr-1" />
+                      <ChevronRight className="w-3.5 h-3.5 -ml-1" />
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Badges on stage */}
-            <div className="absolute top-4 left-4 z-30 pointer-events-none">
-              <span className="bg-neutral-950/80 backdrop-blur-md text-neutral-300 text-[11px] font-mono px-3 py-1 rounded-md border border-neutral-800">
-                BEFORE (Original)
+            <div className="absolute top-3 left-3 z-30 pointer-events-none select-none">
+              <span className="bg-neutral-950/85 backdrop-blur-md text-neutral-300 text-[10px] font-mono px-2.5 py-1 rounded-md border border-neutral-850">
+                BEFORE
               </span>
             </div>
-            <div className="absolute top-4 right-4 z-30 pointer-events-none">
-              <span className="bg-gradient-to-r from-amber-500 to-emerald-400 text-neutral-950 font-extrabold text-[11px] font-mono px-3 py-1 rounded-md shadow-lg">
-                AFTER (Ultra 8K AI)
+            <div className="absolute top-3 right-3 z-30 pointer-events-none select-none">
+              <span className="bg-gradient-to-r from-amber-400 to-emerald-400 text-neutral-950 font-black text-[10px] font-mono px-2.5 py-1 rounded-md shadow-lg">
+                AFTER (8K)
               </span>
             </div>
           </div>
@@ -331,25 +346,27 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
             className="w-full h-full grid grid-cols-1 sm:grid-cols-2 gap-2 p-2"
           >
             <div className="relative w-full h-full bg-neutral-900 rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center">
-              <span className="absolute top-3 left-3 bg-neutral-950/80 text-neutral-400 text-[10px] font-mono px-2.5 py-1 rounded border border-neutral-700 z-10">
-                Original (Low Res)
+              <span className="absolute top-2 left-2 bg-neutral-950/80 text-neutral-400 text-[10px] font-mono px-2 py-0.5 rounded border border-neutral-700 z-10">
+                Original
               </span>
               <img
                 src={originalImage}
                 alt="Before"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain filter contrast-90 brightness-95"
+                draggable={false}
               />
             </div>
             <div className="relative w-full h-full bg-neutral-900 rounded-xl overflow-hidden border border-amber-500/40 flex items-center justify-center">
-              <span className="absolute top-3 right-3 bg-amber-500 text-neutral-950 text-[10px] font-bold font-mono px-2.5 py-1 rounded shadow z-10">
-                Ultra 8K AI Enhanced
+              <span className="absolute top-2 right-2 bg-amber-400 text-neutral-950 text-[10px] font-bold font-mono px-2 py-0.5 rounded shadow z-10">
+                8K Ultra HD
               </span>
               <img
                 src={enhancedImage}
                 alt="After"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain"
+                draggable={false}
               />
             </div>
           </div>
@@ -366,88 +383,74 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
               alt="8K Enhanced Result"
               referrerPolicy="no-referrer"
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              draggable={false}
             />
           </div>
         )}
 
         {/* Bottom Quick-Tip / Hold Button */}
         {viewMode === 'split' && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 pointer-events-auto">
             <button
               type="button"
-              onMouseDown={() => setIsHoldingOriginal(true)}
-              onMouseUp={() => setIsHoldingOriginal(false)}
-              onTouchStart={() => setIsHoldingOriginal(true)}
-              onTouchEnd={() => setIsHoldingOriginal(false)}
-              className="px-3 py-1.5 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-200 text-xs font-medium rounded-full border border-neutral-700 backdrop-blur-md shadow-lg transition-all active:bg-amber-500 active:text-neutral-950 cursor-pointer"
+              onPointerDown={() => setIsHoldingOriginal(true)}
+              onPointerUp={() => setIsHoldingOriginal(false)}
+              onPointerLeave={() => setIsHoldingOriginal(false)}
+              className="px-3 py-1 bg-neutral-900/90 hover:bg-neutral-800 text-neutral-200 text-[11px] font-medium rounded-full border border-neutral-700 backdrop-blur-md shadow-lg transition-all active:bg-amber-400 active:text-neutral-950 cursor-pointer select-none"
             >
-              Hold to See Original
+              Hold for Original
             </button>
           </div>
         )}
       </div>
 
       {/* Bottom Action Footer */}
-      <div className="p-4 bg-neutral-900/95 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="p-3 sm:p-4 bg-neutral-900/95 border-t border-neutral-800 flex flex-col gap-3">
         {/* Specs Info */}
-        <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-400">
           <span className="font-mono text-neutral-200 font-bold bg-neutral-950 px-2 py-0.5 rounded border border-neutral-800">
             {enhancedDimensions
               ? `${enhancedDimensions.width} × ${enhancedDimensions.height} px`
-              : '7680 × 4320 (8K UHD)'}
+              : '8K Ultra HD'}
           </span>
-          <span>•</span>
-          <span className="text-emerald-400 font-semibold">Zero Watermark</span>
-          <span>•</span>
-          <span className="text-amber-400 font-semibold">Neural Micro-Sharpened</span>
+          <span className="text-emerald-400 font-semibold">100% Uncropped Original Frame</span>
         </div>
 
         {/* Action Buttons with Download Menu */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-          {onUseForVideo && (
-            <button
-              type="button"
-              onClick={() => onUseForVideo(enhancedImage)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold rounded-xl border border-neutral-700 transition-all cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>Use in AI Video</span>
-            </button>
-          )}
-
+        <div className="flex items-center gap-2 w-full">
           {/* Copy Button */}
           <button
             type="button"
             onClick={handleCopyClipboard}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded-xl border border-neutral-700 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1 px-3 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded-xl border border-neutral-700 transition-all cursor-pointer shrink-0"
             title="Copy Image to Clipboard"
           >
             {copySuccess ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
-            <span className="hidden md:inline">{copySuccess ? 'Copied!' : 'Copy'}</span>
+            <span className="text-xs">{copySuccess ? 'Copied!' : 'Copy'}</span>
           </button>
 
           {/* Primary 8K Download Button & Dropdown */}
-          <div className="relative flex items-center" ref={downloadMenuRef}>
+          <div className="relative flex items-center flex-1" ref={downloadMenuRef}>
             <button
               type="button"
               onClick={() => handleDirectDownload('png')}
               disabled={isDownloading}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold rounded-l-xl shadow-xl shadow-emerald-950/60 transition-all cursor-pointer active:scale-98 disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-l-xl shadow-lg transition-all cursor-pointer active:scale-98 disabled:opacity-50"
             >
               {downloadSuccess ? (
                 <>
                   <Check className="w-4 h-4 text-white" />
-                  <span>Downloaded 8K Image!</span>
+                  <span>Saved!</span>
                 </>
               ) : isDownloading ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Saving Image...</span>
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4 text-white" />
-                  <span>Download Ultra 8K Image</span>
+                  <span>Download 8K</span>
                 </>
               )}
             </button>
@@ -456,21 +459,21 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
               type="button"
               onClick={() => setShowDownloadMenu(!showDownloadMenu)}
               className="p-2.5 bg-emerald-700 hover:bg-emerald-600 text-white border-l border-emerald-600 rounded-r-xl transition-all cursor-pointer"
-              title="More Download Options"
+              title="More Options"
             >
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
 
             {/* Dropdown Options */}
             {showDownloadMenu && (
-              <div className="absolute right-0 bottom-12 w-56 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-1.5 z-50 space-y-1 animate-fadeIn">
+              <div className="absolute right-0 bottom-12 w-52 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-1.5 z-50 space-y-1 animate-fadeIn">
                 <button
                   type="button"
                   onClick={() => handleDirectDownload('png')}
                   className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer font-medium"
                 >
                   <Download className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Download 8K PNG (Lossless)</span>
+                  <span>Download PNG (Lossless)</span>
                 </button>
                 <button
                   type="button"
@@ -478,7 +481,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
                   className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Download JPG (Fast / Compact)</span>
+                  <span>Download JPG</span>
                 </button>
                 <button
                   type="button"
@@ -486,15 +489,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
                   className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Open Full 8K in New Tab</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCopyClipboard}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
-                >
-                  <Copy className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Copy Image to Clipboard</span>
+                  <span>Open in New Tab</span>
                 </button>
               </div>
             )}
@@ -504,7 +499,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-2 text-xs text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-all cursor-pointer"
+              className="px-3 py-2 text-xs text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-xl transition-all cursor-pointer shrink-0"
             >
               Close
             </button>

@@ -12,6 +12,7 @@
 export interface UltraEnhanceOptions {
   mode:
     | 'dslr-8k-master'
+    | 'ultra-graphics-uhd'
     | 'remini-face-studio'
     | 'hasselblad-ultra'
     | 'cinema-prime'
@@ -281,6 +282,10 @@ export async function processUltraHDEnhance(
           contrastVal = 1.12;
           brightnessVal = 1.03;
           saturateVal = 1.10;
+        } else if (options.mode === 'ultra-graphics-uhd') {
+          contrastVal = 1.18;
+          brightnessVal = 1.04;
+          saturateVal = 1.15;
         } else if (options.mode === 'remini-face-studio') {
           contrastVal = 1.08;
           brightnessVal = 1.05;
@@ -469,3 +474,41 @@ export async function processUltraHDEnhance(
     img.src = sourceImageBase64;
   });
 }
+
+/**
+ * Guarantee exact original dimensions and aspect ratio preservation for any image
+ */
+export async function matchOriginalFrameDimensions(
+  imageSource: string,
+  targetWidth: number,
+  targetHeight: number
+): Promise<string> {
+  return new Promise((resolve) => {
+    if (!targetWidth || !targetHeight) {
+      return resolve(imageSource);
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return resolve(imageSource);
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // Draw image stretched/fitted exactly to original canvas frame bounds
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL('image/png', 0.98));
+      } catch {
+        resolve(imageSource);
+      }
+    };
+    img.onerror = () => resolve(imageSource);
+    img.src = imageSource;
+  });
+}
+
