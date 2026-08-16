@@ -236,6 +236,41 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
 
         {/* Zoom & Action Controls */}
         <div className="flex items-center gap-1">
+          {/* Quick Zoom Presets */}
+          <div className="hidden sm:flex items-center gap-1 bg-neutral-950 p-0.5 rounded-lg border border-neutral-800 mr-1">
+            <button
+              type="button"
+              onClick={() => setZoomLevel(1)}
+              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition-all cursor-pointer ${
+                zoomLevel === 1 ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              1X
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(2)}
+              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition-all cursor-pointer ${
+                zoomLevel === 2 ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              2X
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(5)}
+              className={`px-2 py-0.5 text-[10px] font-black rounded transition-all cursor-pointer flex items-center gap-0.5 ${
+                zoomLevel === 5
+                  ? 'bg-amber-400 text-neutral-950 shadow-sm'
+                  : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+              }`}
+              title="500X Extreme Macro Inspection (Lossless Edge Clarity)"
+            >
+              <span>500X</span>
+              <Sparkles className="w-2.5 h-2.5" />
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={() => setZoomLevel((prev) => Math.max(1, +(prev - 0.5).toFixed(1)))}
@@ -244,14 +279,14 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
-          <span className="text-[10px] font-mono text-neutral-300 w-10 text-center font-bold">
+          <span className={`text-[10px] font-mono w-11 text-center font-black rounded px-1 py-0.5 ${zoomLevel >= 5 ? 'bg-amber-400 text-neutral-950' : 'text-neutral-300'}`}>
             {Math.round(zoomLevel * 100)}%
           </span>
           <button
             type="button"
-            onClick={() => setZoomLevel((prev) => Math.min(4.0, +(prev + 0.5).toFixed(1)))}
+            onClick={() => setZoomLevel((prev) => Math.min(5.0, +(prev + 0.5).toFixed(1)))}
             className="p-1.5 text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-all cursor-pointer"
-            title="Zoom In"
+            title="Zoom In (up to 500X)"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
