@@ -36,6 +36,7 @@ export const ImageEnhancerStudio: React.FC = () => {
 
   // Helper to get nearest supported aspect ratio string
   const getAspectRatioString = (w: number, h: number): string => {
+    if (!w || !h || h === 0) return '16:9';
     const ratio = w / h;
     if (ratio >= 1.5) return '16:9';
     if (ratio >= 1.15) return '4:3';
