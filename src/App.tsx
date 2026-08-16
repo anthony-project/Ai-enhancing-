@@ -119,6 +119,10 @@ export default function App() {
     <div id="enhance-ai-app" className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-amber-500 selection:text-black pb-16">
       {/* App Header */}
       <Header
+        onReset={() => {
+          setActiveTab('photo');
+          setCurrentMovie(null);
+        }}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         savedMoviesCount={savedMovies.length}
