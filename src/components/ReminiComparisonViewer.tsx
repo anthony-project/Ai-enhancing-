@@ -17,6 +17,11 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Move,
 } from 'lucide-react';
 import { downloadEnhancedImage, copyImageToClipboard } from '../utils/reminiEnhancer';
 
@@ -41,6 +46,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'split' | 'sideBySide' | 'after'>('split');
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isHoldingOriginal, setIsHoldingOriginal] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -50,6 +56,19 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+  // Pan shift helper
+  const handlePan = (dx: number, dy: number) => {
+    setPanOffset((prev) => ({
+      x: Math.max(-500, Math.min(500, prev.x + dx)),
+      y: Math.max(-500, Math.min(500, prev.y + dy)),
+    }));
+  };
+
+  const handleResetView = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
 
   // Handle Dragging
   const handleMove = useCallback(
@@ -238,9 +257,9 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setZoomLevel(1)}
+            onClick={handleResetView}
             className="p-1.5 text-neutral-400 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-all cursor-pointer"
-            title="Reset Zoom"
+            title="Reset Zoom & Pan"
           >
             <RotateCcw className="w-3 h-3" />
           </button>
@@ -252,6 +271,60 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
           >
             {isFullscreen ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
           </button>
+        </div>
+      </div>
+
+      {/* Sub-bar: Directional Navigation (Left, Right, Up, Down, Center) directly under Zoom */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-950 border-b border-neutral-800/80 text-neutral-300 gap-2">
+        <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+          <Move className="w-3 h-3 text-amber-400" />
+          <span className="font-semibold text-neutral-300">Move:</span>
+        </div>
+
+        {/* Small Directional Buttons: Left, Right, Up, Down */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => handlePan(50, 0)}
+            className="p-1.5 text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 active:scale-90 rounded-md border border-neutral-700 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+            title="Move Left"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-neutral-200" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePan(-50, 0)}
+            className="p-1.5 text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 active:scale-90 rounded-md border border-neutral-700 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+            title="Move Right"
+          >
+            <ArrowRight className="w-3.5 h-3.5 text-neutral-200" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePan(0, 50)}
+            className="p-1.5 text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 active:scale-90 rounded-md border border-neutral-700 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+            title="Move Up"
+          >
+            <ArrowUp className="w-3.5 h-3.5 text-neutral-200" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePan(0, -50)}
+            className="p-1.5 text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 active:scale-90 rounded-md border border-neutral-700 transition-all cursor-pointer shadow-sm flex items-center justify-center"
+            title="Move Down"
+          >
+            <ArrowDown className="w-3.5 h-3.5 text-neutral-200" />
+          </button>
+          {(panOffset.x !== 0 || panOffset.y !== 0 || zoomLevel !== 1) && (
+            <button
+              type="button"
+              onClick={handleResetView}
+              className="px-2 py-1 text-[10px] font-bold text-amber-400 bg-amber-950/80 hover:bg-amber-900 active:scale-95 rounded-md border border-amber-500/50 transition-all cursor-pointer ml-1"
+              title="Reset Position to Center"
+            >
+              Center
+            </button>
+          )}
         </div>
       </div>
 
@@ -272,9 +345,11 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
             className="relative w-full h-full cursor-ew-resize overflow-hidden flex items-center justify-center select-none"
             style={{ touchAction: 'none' }}
           >
-            {/* Zoom Wrapper */}
+            {/* Zoom & Pan Wrapper */}
             <div
-              style={{ transform: `scale(${zoomLevel})` }}
+              style={{
+                transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+              }}
               className="relative w-full h-full transition-transform duration-100 flex items-center justify-center pointer-events-none"
             >
               {/* Background Layer: Enhanced (After) Image */}
@@ -342,8 +417,10 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
         {/* VIEW MODE 2: SIDE BY SIDE */}
         {viewMode === 'sideBySide' && (
           <div
-            style={{ transform: `scale(${zoomLevel})` }}
-            className="w-full h-full grid grid-cols-1 sm:grid-cols-2 gap-2 p-2"
+            style={{
+              transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+            }}
+            className="w-full h-full grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 transition-transform duration-100"
           >
             <div className="relative w-full h-full bg-neutral-900 rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center">
               <span className="absolute top-2 left-2 bg-neutral-950/80 text-neutral-400 text-[10px] font-mono px-2 py-0.5 rounded border border-neutral-700 z-10">
@@ -375,8 +452,10 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
         {/* VIEW MODE 3: 8K RESULT ONLY */}
         {viewMode === 'after' && (
           <div
-            style={{ transform: `scale(${zoomLevel})` }}
-            className="w-full h-full flex items-center justify-center p-2"
+            style={{
+              transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+            }}
+            className="w-full h-full flex items-center justify-center p-2 transition-transform duration-100"
           >
             <img
               src={enhancedImage}
