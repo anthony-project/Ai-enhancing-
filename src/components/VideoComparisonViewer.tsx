@@ -58,17 +58,20 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
 
   // Compute ultra-fast hardware GPU CSS filter
   const cssFilter = getEnhancedVideoCssFilter(options);
+  const lastTimeUpdateRef = useRef<number>(0);
 
-  // Helper to synchronize all active video tags with master
-  const syncVideos = useCallback((targetTime?: number) => {
+  // Helper to synchronize active video tags with master only when necessary (e.g. initial start, user seek)
+  const syncVideos = useCallback((targetTime?: number, force = false) => {
     const master = masterVideoRef.current;
     if (!master) return;
     const time = typeof targetTime === 'number' ? targetTime : master.currentTime;
 
     const slaveVideos = [enhancedVideoRef.current, sideBySideOrigRef.current, sideBySideEnhRef.current];
     slaveVideos.forEach((vid) => {
-      if (vid && Math.abs(vid.currentTime - time) > 0.05) {
-        vid.currentTime = time;
+      if (vid && (force || Math.abs(vid.currentTime - time) > 0.4)) {
+        try {
+          vid.currentTime = time;
+        } catch {}
       }
     });
   }, []);
@@ -79,6 +82,8 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
     if (!master) return;
 
     if (master.paused) {
+      // Sync timestamps once before playing to guarantee instant alignment
+      syncVideos(master.currentTime, true);
       master.play().catch(() => {});
       if (enhancedVideoRef.current) enhancedVideoRef.current.play().catch(() => {});
       if (sideBySideOrigRef.current) sideBySideOrigRef.current.play().catch(() => {});
@@ -106,6 +111,16 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
     allVideos.forEach((v) => {
       if (v) v.currentTime = time;
     });
+  };
+
+  const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const vid = e.currentTarget;
+    const now = Date.now();
+    // Throttle React state updates to ~4 times per second to eliminate 60fps UI re-render lag
+    if (now - lastTimeUpdateRef.current > 250) {
+      lastTimeUpdateRef.current = now;
+      setCurrentTime(vid.currentTime);
+    }
   };
 
   // Slider Dragging with Pointer Capture
@@ -327,19 +342,17 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
               ref={masterVideoRef}
               src={videoSrc}
               playsInline
+              preload="auto"
               loop
               muted={isMuted}
               className="absolute inset-0 w-full h-full object-contain pointer-events-none"
               style={{
                 clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
-                willChange: 'clip-path',
+                willChange: 'clip-path, transform',
+                transform: 'translate3d(0, 0, 0)',
+                backfaceVisibility: 'hidden',
               }}
-              onTimeUpdate={() => {
-                if (masterVideoRef.current) {
-                  setCurrentTime(masterVideoRef.current.currentTime);
-                  syncVideos(masterVideoRef.current.currentTime);
-                }
-              }}
+              onTimeUpdate={handleVideoTimeUpdate}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />
@@ -349,13 +362,16 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
               ref={enhancedVideoRef}
               src={videoSrc}
               playsInline
+              preload="auto"
               loop
               muted
               className="absolute inset-0 w-full h-full object-contain pointer-events-none"
               style={{
                 filter: cssFilter,
                 clipPath: `inset(0 0 0 ${sliderPosition}%)`,
-                willChange: 'clip-path, filter',
+                willChange: 'clip-path, filter, transform',
+                transform: 'translate3d(0, 0, 0)',
+                backfaceVisibility: 'hidden',
               }}
             />
 
@@ -410,11 +426,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 loop
                 muted={isMuted}
                 className="w-full h-full object-contain pointer-events-none"
-                onTimeUpdate={() => {
-                  if (sideBySideOrigRef.current) {
-                    setCurrentTime(sideBySideOrigRef.current.currentTime);
-                  }
-                }}
+                onTimeUpdate={handleVideoTimeUpdate}
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
               />
@@ -454,11 +466,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
               muted={isMuted}
               style={{ filter: cssFilter }}
               className="w-full h-full object-contain pointer-events-none"
-              onTimeUpdate={() => {
-                if (masterVideoRef.current) {
-                  setCurrentTime(masterVideoRef.current.currentTime);
-                }
-              }}
+              onTimeUpdate={handleVideoTimeUpdate}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />

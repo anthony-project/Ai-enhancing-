@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ShieldCheck, Users, Eye, Activity } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 interface HeaderProps {
   onReset?: () => void;
   onOpenPrivacy?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onReset, onOpenPrivacy }) => {
+export const Header: React.FC<HeaderProps> = ({ onReset }) => {
   const [activeUsers, setActiveUsers] = useState<number>(1);
   const [totalVisits, setTotalVisits] = useState<number>(24680);
 
@@ -68,33 +68,27 @@ export const Header: React.FC<HeaderProps> = ({ onReset, onOpenPrivacy }) => {
       className="sticky top-0 z-40 bg-neutral-950/95 backdrop-blur-md border-b border-neutral-850 px-2.5 sm:px-4 py-2 transition-all w-full select-none"
     >
       <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
-        {/* Left: Logo & Brand (Instagram Profile Crop Avatar) */}
+        {/* Left: Logo & Brand */}
         <div
           onClick={onReset}
-          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group select-none min-w-0"
+          className="flex items-center gap-2.5 cursor-pointer group select-none min-w-0"
           title="Enhance Your Photo"
         >
           <div
             id="logo-icon"
-            className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-rose-500 via-amber-500 to-red-600 p-0.5 shadow-md shadow-rose-500/20 group-hover:shadow-rose-500/40 transition-all overflow-hidden shrink-0 ring-1 ring-white/20"
+            className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-neutral-900 border border-neutral-750 shadow-md overflow-hidden shrink-0 group-hover:border-amber-400/60 transition-all p-0.5"
           >
             <img
               src="/logo.jpg"
-              alt="Profile Logo"
-              className="w-full h-full object-cover rounded-full"
+              alt="Logo"
+              className="w-full h-full object-cover rounded-lg"
               referrerPolicy="no-referrer"
             />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm sm:text-base tracking-tight text-white font-serif whitespace-nowrap">
-                Enhance <span className="text-amber-400">Your Photo</span>
-              </span>
-              <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-emerald-400 text-neutral-950 flex items-center gap-0.5 shadow-sm">
-                <Sparkles className="w-2.5 h-2.5 fill-neutral-950 text-neutral-950" />
-                8K
-              </span>
-            </div>
+            <span className="font-bold text-sm sm:text-base tracking-tight text-white font-serif whitespace-nowrap block">
+              Enhance <span className="text-amber-400">Your Photo</span>
+            </span>
           </div>
         </div>
 
@@ -103,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ onReset, onOpenPrivacy }) => {
           {/* Live Visitor & Online Stats Mini Box */}
           <div
             id="visitor-stats-minibox"
-            className="flex items-center gap-1.5 sm:gap-3 bg-neutral-900/90 border border-neutral-800 px-2 sm:px-3 py-1 rounded-xl shadow-inner text-[10px] sm:text-xs"
+            className="flex items-center gap-1.5 sm:gap-3 bg-neutral-900/90 border border-neutral-800 px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-inner text-[10px] sm:text-xs"
           >
             {/* Online / Active Users Counting */}
             <div
@@ -119,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({ onReset, onOpenPrivacy }) => {
             </div>
 
             {/* Divider */}
-            <div className="h-3 w-px bg-neutral-750" />
+            <div className="h-3.5 w-px bg-neutral-750" />
 
             {/* Total Visits Counting */}
             <div
@@ -130,16 +124,6 @@ export const Header: React.FC<HeaderProps> = ({ onReset, onOpenPrivacy }) => {
               <span className="font-mono font-bold text-amber-300">{formatNumber(totalVisits)}</span>
               <span className="text-[10px] text-neutral-400 hidden sm:inline">visits</span>
             </div>
-          </div>
-
-          {/* Zero Storage & Security Badge */}
-          <div 
-            onClick={onOpenPrivacy}
-            className="flex items-center gap-1 bg-emerald-950/80 hover:bg-emerald-900/80 border border-emerald-500/40 px-2 py-1 rounded-full text-[10px] text-emerald-300 font-semibold shadow-inner shrink-0 cursor-pointer transition-colors"
-            title="Click to view Privacy Policy & Zero Data Storage guarantee"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="hidden xs:inline">100% Private</span>
           </div>
         </div>
       </div>

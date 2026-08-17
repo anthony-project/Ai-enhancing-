@@ -35,6 +35,7 @@ import {
   ArrowLeft,
   Filter,
   ArrowDown,
+  RotateCcw,
 } from 'lucide-react';
 import {
   processUltraHDEnhance,
@@ -78,11 +79,11 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
   // Global Presets & Sliders (Applied to active item or all queue items)
-  const [globalModes, setGlobalModes] = useState<UltraEnhancePreset[]>(['dslr-8k-master']);
-  const [sharpness, setSharpness] = useState<number>(8);
-  const [hdrExposure, setHdrExposure] = useState<number>(3);
-  const [faceClarity, setFaceClarity] = useState<number>(5);
-  const [denoiseStrength, setDenoiseStrength] = useState<number>(4);
+  const [globalModes, setGlobalModes] = useState<UltraEnhancePreset[]>([]);
+  const [sharpness, setSharpness] = useState<number>(6);
+  const [hdrExposure, setHdrExposure] = useState<number>(2);
+  const [faceClarity, setFaceClarity] = useState<number>(3);
+  const [denoiseStrength, setDenoiseStrength] = useState<number>(3);
 
   // Batch Processing States
   const [isBatchProcessing, setIsBatchProcessing] = useState<boolean>(false);
@@ -229,12 +230,11 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
     let nextModes: UltraEnhancePreset[];
     if (globalModes.includes(mode)) {
       nextModes = globalModes.filter((m) => m !== mode);
-      if (nextModes.length === 0) nextModes = [mode];
     } else {
       nextModes = [...globalModes, mode];
+      calibrateSlidersForMode(mode);
     }
     setGlobalModes(nextModes);
-    calibrateSlidersForMode(mode);
 
     // Sync to active item if present
     if (activeItemId) {
@@ -242,6 +242,35 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
         prev.map((item) => (item.id === activeItemId ? { ...item, selectedModes: nextModes } : item))
       );
     }
+  };
+
+  // Reset / Remove all applied and marked effects so user can start fresh
+  const handleResetEffects = () => {
+    setGlobalModes([]);
+    setSharpness(6);
+    setHdrExposure(2);
+    setFaceClarity(3);
+    setDenoiseStrength(3);
+
+    if (activeItemId) {
+      setQueue((prev) =>
+        prev.map((item) =>
+          item.id === activeItemId
+            ? {
+                ...item,
+                selectedModes: [],
+                enhancedUrl: null,
+                enhancedWidth: null,
+                enhancedHeight: null,
+                status: 'pending',
+                isProcessing: false,
+              }
+            : item
+        )
+      );
+    }
+    setWipeNotice('✨ All effects removed & reset! You can now mark any effect to try fresh.');
+    setTimeout(() => setWipeNotice(null), 3500);
   };
 
   // Upload Batch (Handles up to 100+ files smoothly with security validation)
@@ -982,33 +1011,37 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 <span className="text-xs font-black text-white uppercase tracking-wider">
                   Step 1: Mark & Select 8K Effects:
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[11px] font-black border border-amber-400/40 flex items-center gap-1">
-                  <span>✨</span>
-                  <span>{globalModes.length} Layer{globalModes.length > 1 ? 's' : ''} Selected</span>
-                </span>
+                {globalModes.length > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[11px] font-black border border-amber-400/40 flex items-center gap-1">
+                    <span>✨</span>
+                    <span>{globalModes.length} Marked</span>
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-850 text-neutral-400 font-mono text-[11px] font-bold border border-neutral-700">
+                    0 Marked (Click any effect below)
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
-                {globalModes.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGlobalModes(['dslr-8k-master']);
-                      calibrateSlidersForMode('dslr-8k-master');
-                    }}
-                    className="text-[10px] text-amber-400 hover:underline font-bold cursor-pointer"
-                  >
-                    Reset to DSLR 8K
-                  </button>
-                )}
-                <span className="text-[10px] text-neutral-400 font-medium">
-                  Check boxes to stack multiple effects
+                {/* Reset / Remove Applied & Marked Effects Button */}
+                <button
+                  type="button"
+                  onClick={handleResetEffects}
+                  className="px-2.5 py-1 bg-neutral-850 hover:bg-rose-950/70 hover:border-rose-500/50 hover:text-rose-300 text-neutral-300 text-[11px] font-black rounded-lg border border-neutral-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                  title="Remove and reset all marked effects so you can start fresh"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Reset / Remove Effects</span>
+                </button>
+                <span className="text-[10px] text-neutral-400 font-medium hidden sm:inline">
+                  Click boxes to mark & try effects
                 </span>
               </div>
             </div>
 
             {/* Active Stacked Effects Tags */}
-            {globalModes.length > 0 && (
+            {globalModes.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5 px-0.5">
                 <span className="text-[10px] font-black text-neutral-400">MARKED EFFECTS:</span>
                 {globalModes.map((smId) => {
@@ -1021,19 +1054,29 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                     >
                       <span className="text-xs">{presetInfo.emoji}</span>
                       <span>{presetInfo.title}</span>
-                      {globalModes.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMode(smId)}
-                          className="hover:text-rose-400 ml-0.5 cursor-pointer text-neutral-400 text-xs leading-none font-bold"
-                          title="Remove"
-                        >
-                          ×
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleMode(smId)}
+                        className="hover:text-rose-400 ml-0.5 cursor-pointer text-neutral-400 text-xs leading-none font-bold"
+                        title="Remove this effect"
+                      >
+                        ×
+                      </button>
                     </span>
                   );
                 })}
+                <button
+                  type="button"
+                  onClick={handleResetEffects}
+                  className="text-[10px] text-rose-400 hover:text-rose-300 hover:underline font-bold ml-1 cursor-pointer"
+                >
+                  (Clear All)
+                </button>
+              </div>
+            ) : (
+              <div className="text-[11px] text-neutral-400 px-1 italic flex items-center gap-1.5">
+                <span className="text-amber-400 font-bold">Tip:</span>
+                <span>Select any card or checkbox below to choose your desired 8K effect.</span>
               </div>
             )}
 
@@ -1210,7 +1253,9 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                   {isBatchProcessing ? (
                     <div className="flex items-center gap-2">
                       <RefreshCw className="w-4 h-4 text-neutral-950 animate-spin shrink-0" />
-                      <span>Applying {globalModes.length} Effects & Reconstructing 8K...</span>
+                      <span>
+                        Applying {globalModes.length > 0 ? `${globalModes.length} Effects` : '8K Enhancement'} & Reconstructing...
+                      </span>
                     </div>
                   ) : (
                     <>
@@ -1219,8 +1264,12 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         {queue.length > 1
                           ? `🚀 Order & Start Enhancing All (${queue.length} Media Items)`
                           : activeItem?.type === 'video'
-                          ? `🚀 Order & Start Enhancing Video (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`
-                          : `🚀 Order & Start Enhancing Image (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`}
+                          ? globalModes.length > 0
+                            ? `🚀 Order & Start Enhancing Video (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`
+                            : '🚀 Order & Start Enhancing Video'
+                          : globalModes.length > 0
+                          ? `🚀 Order & Start Enhancing Image (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`
+                          : '🚀 Order & Start Enhancing Image'}
                       </span>
                     </>
                   )}
@@ -1363,6 +1412,36 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                                 </button>
                               </div>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setQueue((prev) =>
+                                  prev.map((i) =>
+                                    i.id === item.id
+                                      ? {
+                                          ...i,
+                                          enhancedUrl: null,
+                                          enhancedWidth: null,
+                                          enhancedHeight: null,
+                                          status: 'pending',
+                                          selectedModes: [],
+                                          isProcessing: false,
+                                        }
+                                      : i
+                                  )
+                                );
+                                setGlobalModes([]);
+                                setActiveItemId(item.id);
+                                setWipeNotice(`✨ Effect reset on ${item.name}! You can now choose any new effect and re-enhance.`);
+                                setTimeout(() => setWipeNotice(null), 3500);
+                              }}
+                              className="px-2.5 py-1 bg-neutral-850 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 text-[10px] font-black rounded-lg border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                              title="Reset applied effect and pick a new effect to try"
+                            >
+                              <RotateCcw className="w-3 h-3 text-amber-400" />
+                              <span>Reset & Try Other Effects</span>
+                            </button>
 
                             <span className="text-emerald-400 font-mono font-black text-[10px] bg-emerald-950 px-2 py-1 rounded-lg border border-emerald-500/40">
                               {item.enhancedWidth} × {item.enhancedHeight} px
@@ -1562,33 +1641,6 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               })}
             </div>
           </div>
-
-          {/* Privacy Policy Clickable Heading Banner */}
-          {onOpenPrivacy && (
-            <div className="pt-2 px-1">
-              <div
-                onClick={onOpenPrivacy}
-                className="group w-full flex items-center justify-between gap-2 p-3 bg-neutral-900/90 hover:bg-neutral-850 border border-neutral-800 hover:border-emerald-500/40 rounded-xl cursor-pointer transition-all shadow-sm active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-neutral-200 group-hover:text-white transition-colors truncate">
-                      🔒 Privacy Policy & Data Protection (100% On-Device)
-                    </h4>
-                    <p className="text-[10px] text-neutral-400 truncate">
-                      Zero server storage: Your media is never saved or shared with anyone.
-                    </p>
-                  </div>
-                </div>
-                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30 shrink-0 group-hover:bg-emerald-900/80 transition-colors">
-                  View Policy →
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* ================= 6. DEDICATED SINGLE GREEN MASTER DOWNLOAD BUTTON AT THE BOTTOM ================= */}
           <div className="sticky bottom-3 z-40 mt-6 max-w-4xl mx-auto w-full px-1">
