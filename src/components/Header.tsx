@@ -3,9 +3,10 @@ import { Sparkles, ShieldCheck, Users, Eye, Activity } from 'lucide-react';
 
 interface HeaderProps {
   onReset?: () => void;
+  onOpenPrivacy?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onReset }) => {
+export const Header: React.FC<HeaderProps> = ({ onReset, onOpenPrivacy }) => {
   const [activeUsers, setActiveUsers] = useState<number>(1);
   const [totalVisits, setTotalVisits] = useState<number>(24680);
 
@@ -131,10 +132,14 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
             </div>
           </div>
 
-          {/* Zero Storage Badge */}
-          <div className="hidden md:flex items-center gap-1 bg-emerald-950/70 border border-emerald-500/30 px-2 py-1 rounded-full text-[10px] text-emerald-300 font-semibold shadow-inner shrink-0">
-            <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-            <span>RAM Only</span>
+          {/* Zero Storage & Security Badge */}
+          <div 
+            onClick={onOpenPrivacy}
+            className="flex items-center gap-1 bg-emerald-950/80 hover:bg-emerald-900/80 border border-emerald-500/40 px-2 py-1 rounded-full text-[10px] text-emerald-300 font-semibold shadow-inner shrink-0 cursor-pointer transition-colors"
+            title="Click to view Privacy Policy & Zero Data Storage guarantee"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="hidden xs:inline">100% Private</span>
           </div>
         </div>
       </div>

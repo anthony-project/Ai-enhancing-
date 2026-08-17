@@ -5,19 +5,21 @@ import {
   RotateCcw,
   Volume2,
   VolumeX,
-  Maximize2,
-  Minimize2,
-  Download,
-  Check,
   Sparkles,
   Sliders,
   Columns,
   Camera,
   RefreshCw,
-  Zap,
+  Check,
+  Download,
   Film,
 } from 'lucide-react';
-import { VideoEnhanceOptions, renderEnhancedVideoFrame, exportEnhancedVideo } from '../utils/videoEnhancer';
+import {
+  VideoEnhanceOptions,
+  getEnhancedVideoCssFilter,
+  renderEnhancedVideoFrame,
+  exportEnhancedVideo,
+} from '../utils/videoEnhancer';
 import { downloadEnhancedImage } from '../utils/reminiEnhancer';
 
 interface VideoComparisonViewerProps {
@@ -26,6 +28,7 @@ interface VideoComparisonViewerProps {
   dimensions?: { width: number; height: number };
   duration?: number;
   onExtractFrame?: (frameDataUrl: string) => void;
+  hideDownloadButton?: boolean;
 }
 
 export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
@@ -34,10 +37,11 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
   dimensions,
   duration,
   onExtractFrame,
+  hideDownloadButton = true,
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [sliderPosition, setSliderPosition] = useState<number>(50); // percentage
+  const [sliderPosition, setSliderPosition] = useState<number>(50); // percentage (0 - 100)
   const [isDraggingSlider, setIsDraggingSlider] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
@@ -47,111 +51,64 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const originalVideoRef = useRef<HTMLVideoElement>(null);
-  const sideBySideOrigVideoRef = useRef<HTMLVideoElement>(null);
-  const splitOrigVideoRef = useRef<HTMLVideoElement>(null);
-  const enhancedCanvasRef = useRef<HTMLCanvasElement>(null);
+  const masterVideoRef = useRef<HTMLVideoElement>(null);
+  const enhancedVideoRef = useRef<HTMLVideoElement>(null);
+  const sideBySideOrigRef = useRef<HTMLVideoElement>(null);
+  const sideBySideEnhRef = useRef<HTMLVideoElement>(null);
 
-  // Synchronous GPU frame rendering
-  const renderFrame = useCallback(() => {
-    if (originalVideoRef.current && enhancedCanvasRef.current) {
-      const vid = originalVideoRef.current;
-      const canvas = enhancedCanvasRef.current;
+  // Compute ultra-fast hardware GPU CSS filter
+  const cssFilter = getEnhancedVideoCssFilter(options);
 
-      if (vid.videoWidth > 0 && vid.videoHeight > 0) {
-        if (canvas.width !== vid.videoWidth || canvas.height !== vid.videoHeight) {
-          canvas.width = vid.videoWidth;
-          canvas.height = vid.videoHeight;
-        }
-        renderEnhancedVideoFrame(vid, canvas, options);
+  // Helper to synchronize all active video tags with master
+  const syncVideos = useCallback((targetTime?: number) => {
+    const master = masterVideoRef.current;
+    if (!master) return;
+    const time = typeof targetTime === 'number' ? targetTime : master.currentTime;
+
+    const slaveVideos = [enhancedVideoRef.current, sideBySideOrigRef.current, sideBySideEnhRef.current];
+    slaveVideos.forEach((vid) => {
+      if (vid && Math.abs(vid.currentTime - time) > 0.05) {
+        vid.currentTime = time;
       }
-    }
-  }, [options]);
+    });
+  }, []);
 
-  useEffect(() => {
-    let animId: number;
-    const loop = () => {
-      if (originalVideoRef.current && !originalVideoRef.current.paused) {
-        renderFrame();
-        setCurrentTime(originalVideoRef.current.currentTime);
-      }
-      animId = requestAnimationFrame(loop);
-    };
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
-  }, [renderFrame]);
-
-  // Robust Initial & Static draw: ensures enhanced frame is visible IMMEDIATELY without requiring play
-  useEffect(() => {
-    const vid = originalVideoRef.current;
-    if (vid) {
-      const onReady = () => {
-        renderFrame();
-      };
-
-      vid.addEventListener('loadedmetadata', onReady);
-      vid.addEventListener('loadeddata', onReady);
-      vid.addEventListener('canplay', onReady);
-      vid.addEventListener('seeked', onReady);
-      vid.addEventListener('timeupdate', onReady);
-
-      // Eager initial render attempts in case video is already cached/buffered
-      renderFrame();
-      const retryInterval = setInterval(() => {
-        if (vid.readyState >= 1 && vid.videoWidth > 0) {
-          renderFrame();
-        }
-      }, 100);
-
-      const stopRetry = setTimeout(() => {
-        clearInterval(retryInterval);
-      }, 2000);
-
-      return () => {
-        vid.removeEventListener('loadedmetadata', onReady);
-        vid.removeEventListener('loadeddata', onReady);
-        vid.removeEventListener('canplay', onReady);
-        vid.removeEventListener('seeked', onReady);
-        vid.removeEventListener('timeupdate', onReady);
-        clearInterval(retryInterval);
-        clearTimeout(stopRetry);
-      };
-    }
-  }, [renderFrame, videoSrc]);
-
-  // Redraw when options change
-  useEffect(() => {
-    renderFrame();
-  }, [options, renderFrame]);
-
+  // Synchronize playback state across active videos
   const togglePlay = () => {
-    if (originalVideoRef.current) {
-      if (originalVideoRef.current.paused) {
-        originalVideoRef.current.play();
-        if (splitOrigVideoRef.current) splitOrigVideoRef.current.play().catch(() => {});
-        if (sideBySideOrigVideoRef.current) sideBySideOrigVideoRef.current.play().catch(() => {});
-        setIsPlaying(true);
-      } else {
-        originalVideoRef.current.pause();
-        if (splitOrigVideoRef.current) splitOrigVideoRef.current.pause();
-        if (sideBySideOrigVideoRef.current) sideBySideOrigVideoRef.current.pause();
-        setIsPlaying(false);
-      }
+    const master = masterVideoRef.current;
+    if (!master) return;
+
+    if (master.paused) {
+      master.play().catch(() => {});
+      if (enhancedVideoRef.current) enhancedVideoRef.current.play().catch(() => {});
+      if (sideBySideOrigRef.current) sideBySideOrigRef.current.play().catch(() => {});
+      if (sideBySideEnhRef.current) sideBySideEnhRef.current.play().catch(() => {});
+      setIsPlaying(true);
+    } else {
+      master.pause();
+      if (enhancedVideoRef.current) enhancedVideoRef.current.pause();
+      if (sideBySideOrigRef.current) sideBySideOrigRef.current.pause();
+      if (sideBySideEnhRef.current) sideBySideEnhRef.current.pause();
+      setIsPlaying(false);
     }
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const time = Number(e.target.value);
     setCurrentTime(time);
-    if (originalVideoRef.current) {
-      originalVideoRef.current.currentTime = time;
-      if (splitOrigVideoRef.current) splitOrigVideoRef.current.currentTime = time;
-      if (sideBySideOrigVideoRef.current) sideBySideOrigVideoRef.current.currentTime = time;
-      renderFrame();
-    }
+
+    const allVideos = [
+      masterVideoRef.current,
+      enhancedVideoRef.current,
+      sideBySideOrigRef.current,
+      sideBySideEnhRef.current,
+    ];
+    allVideos.forEach((v) => {
+      if (v) v.currentTime = time;
+    });
   };
 
-  // Slider dragging logic
+  // Slider Dragging with Pointer Capture
   const handleSliderMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -183,26 +140,33 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
     } catch {}
   };
 
-  // Extract high-res frame
+  // Extract High-Res Frame
   const handleCaptureFrame = () => {
-    if (enhancedCanvasRef.current) {
-      const dataUrl = enhancedCanvasRef.current.toDataURL('image/png', 1.0);
-      if (onExtractFrame) {
-        onExtractFrame(dataUrl);
-      } else {
-        downloadEnhancedImage(dataUrl, `enhanced_video_frame_${Date.now()}.png`);
-      }
+    const vid = masterVideoRef.current || enhancedVideoRef.current;
+    if (!vid || vid.videoWidth === 0) return;
+
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = vid.videoWidth;
+    offscreenCanvas.height = vid.videoHeight;
+
+    renderEnhancedVideoFrame(vid, offscreenCanvas, options);
+    const dataUrl = offscreenCanvas.toDataURL('image/png', 1.0);
+
+    if (onExtractFrame) {
+      onExtractFrame(dataUrl);
+    } else {
+      downloadEnhancedImage(dataUrl, `enhanced_video_frame_${Date.now()}.png`);
     }
   };
 
-  // Export video with strictly guaranteed 100% completion (No loop restart)
+  // Export video
   const handleExportVideo = async () => {
     if (isExporting) return;
     setIsExporting(true);
     setExportProgress(1);
 
     try {
-      const blob = await exportEnhancedVideo(
+      const { blob, filename } = await exportEnhancedVideo(
         videoSrc,
         options,
         (p) => setExportProgress(p)
@@ -213,7 +177,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `enhanced_8k_video_${Date.now()}.webm`;
+      a.download = filename || `enhanced_8k_video_${Date.now()}.mp4`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -236,7 +200,8 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const totalDuration = duration || (originalVideoRef.current ? originalVideoRef.current.duration : 0) || 0;
+  const totalDuration =
+    duration || (masterVideoRef.current ? masterVideoRef.current.duration : 0) || 0;
 
   return (
     <div className="space-y-4 select-none w-full">
@@ -252,7 +217,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 ? 'bg-amber-400 text-neutral-950 shadow-md ring-1 ring-amber-300'
                 : 'text-neutral-400 hover:text-neutral-100'
             }`}
-            title="Interactive Large Split Slider (Before vs After)"
+            title="Interactive Split Slider (Before vs After)"
           >
             <Sliders className="w-3.5 h-3.5" />
             <span>Split Slider</span>
@@ -265,7 +230,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 ? 'bg-amber-400 text-neutral-950 shadow-md ring-1 ring-amber-300'
                 : 'text-neutral-400 hover:text-neutral-100'
             }`}
-            title="Side by Side Large Comparison"
+            title="Side by Side Comparison"
           >
             <Columns className="w-3.5 h-3.5" />
             <span>Side by Side</span>
@@ -285,7 +250,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
           </button>
         </div>
 
-        {/* Action buttons: Extract Frame & Download */}
+        {/* Action buttons: Extract Frame (and optional Download if enabled) */}
         <div className="flex items-center gap-2.5">
           <button
             type="button"
@@ -297,29 +262,31 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
             <span className="hidden sm:inline">Capture 8K Frame</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleExportVideo}
-            disabled={isExporting}
-            className="px-4 py-2 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-neutral-950 font-black rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 active:scale-95 text-xs sm:text-sm"
-          >
-            {isExporting ? (
-              <>
-                <RefreshCw className="w-4 h-4 text-neutral-950 animate-spin" />
-                <span>Exporting 8K Video ({exportProgress}%)...</span>
-              </>
-            ) : downloadSuccess ? (
-              <>
-                <Check className="w-4 h-4 text-neutral-950 stroke-[3]" />
-                <span>Downloaded Successfully!</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 stroke-[2.5]" />
-                <span>Download Enhanced Video</span>
-              </>
-            )}
-          </button>
+          {!hideDownloadButton && (
+            <button
+              type="button"
+              onClick={handleExportVideo}
+              disabled={isExporting}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-neutral-950 font-black rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 active:scale-95 text-xs sm:text-sm"
+            >
+              {isExporting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 text-neutral-950 animate-spin" />
+                  <span>Exporting 8K Video ({exportProgress}%)...</span>
+                </>
+              ) : downloadSuccess ? (
+                <>
+                  <Check className="w-4 h-4 text-neutral-950 stroke-[3]" />
+                  <span>Downloaded Successfully!</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 stroke-[2.5]" />
+                  <span>Download Enhanced Video</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -329,7 +296,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
           <div className="flex items-center justify-between text-xs font-bold text-neutral-200">
             <span className="flex items-center gap-1.5 text-emerald-400">
               <Sparkles className="w-3.5 h-3.5 animate-spin" />
-              <span>Fast 8K Processing & GPU Encoding</span>
+              <span>Fast 8K Processing & MP4 Hardware Encoding</span>
             </span>
             <span className="font-mono text-emerald-400 text-sm font-black">{exportProgress}%</span>
           </div>
@@ -352,62 +319,54 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
         ref={containerRef}
         className="relative w-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] max-h-[82vh] bg-black rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl flex items-center justify-center select-none"
       >
-        {/* Hidden Master Video Element (Hardware synchronized) */}
-        <video
-          ref={originalVideoRef}
-          src={videoSrc}
-          playsInline
-          loop
-          muted={isMuted}
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-0"
-          onTimeUpdate={() => {
-            if (originalVideoRef.current) {
-              setCurrentTime(originalVideoRef.current.currentTime);
-            }
-          }}
-          onEnded={() => setIsPlaying(false)}
-        />
-
-        {/* ================= VIEW MODE 1: SPLIT SLIDER WITH ENLARGED TOUCH HANDLE ================= */}
+        {/* ================= VIEW MODE 1: SPLIT SLIDER (HARDWARE ACCELERATED GPU COMPOSITION) ================= */}
         {viewMode === 'split' && (
           <div className="relative w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center overflow-hidden">
-            {/* Background Canvas: 8K Enhanced (Full View) */}
-            <canvas
-              ref={enhancedCanvasRef}
-              className="absolute inset-0 w-full h-full object-contain"
+            {/* Original Video (Left side of slider) */}
+            <video
+              ref={masterVideoRef}
+              src={videoSrc}
+              playsInline
+              loop
+              muted={isMuted}
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+              style={{
+                clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
+                willChange: 'clip-path',
+              }}
+              onTimeUpdate={() => {
+                if (masterVideoRef.current) {
+                  setCurrentTime(masterVideoRef.current.currentTime);
+                  syncVideos(masterVideoRef.current.currentTime);
+                }
+              }}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
             />
 
-            {/* Foreground: Original Video (Clipped by slider position) */}
-            <div
-              className="absolute inset-0 overflow-hidden"
-              style={{ width: `${sliderPosition}%` }}
-            >
-              <video
-                ref={splitOrigVideoRef}
-                src={videoSrc}
-                playsInline
-                loop
-                muted
-                className="absolute inset-0 w-full h-full object-contain max-w-none"
-                style={{
-                  width: containerRef.current ? `${containerRef.current.clientWidth}px` : '100%',
-                  height: containerRef.current ? `${containerRef.current.clientHeight}px` : '100%',
-                }}
-                onLoadedMetadata={() => {
-                  if (splitOrigVideoRef.current && originalVideoRef.current) {
-                    splitOrigVideoRef.current.currentTime = originalVideoRef.current.currentTime;
-                  }
-                }}
-              />
-              {/* Original Tag */}
-              <div className="absolute top-4 left-4 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-300 border border-white/10 uppercase tracking-wider shadow-lg flex items-center gap-1.5">
-                <Film className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Original Video</span>
-              </div>
+            {/* Enhanced Video with GPU Hardware CSS Filter (Right side of slider) */}
+            <video
+              ref={enhancedVideoRef}
+              src={videoSrc}
+              playsInline
+              loop
+              muted
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+              style={{
+                filter: cssFilter,
+                clipPath: `inset(0 0 0 ${sliderPosition}%)`,
+                willChange: 'clip-path, filter',
+              }}
+            />
+
+            {/* Original Tag */}
+            <div className="absolute top-4 left-4 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-300 border border-white/10 uppercase tracking-wider shadow-lg flex items-center gap-1.5 pointer-events-none">
+              <Film className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Original Video</span>
             </div>
 
             {/* 8K Enhanced Tag */}
-            <div className="absolute top-4 right-4 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
+            <div className="absolute top-4 right-4 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-none">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>8K Enhanced Video</span>
             </div>
@@ -421,7 +380,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
             >
-              {/* EXTRA LARGE SLIDER HANDLE BOX (Requested: Only Video mode me bada box) */}
+              {/* EXTRA LARGE SLIDER HANDLE BOX */}
               <div
                 className={`min-w-[95px] px-3.5 py-2 rounded-2xl bg-neutral-950 text-amber-400 shadow-[0_10px_30px_rgba(0,0,0,0.9)] flex items-center justify-center gap-2 border-2 border-amber-400 cursor-ew-resize select-none transition-transform hover:scale-105 active:scale-95 ${
                   isDraggingSlider ? 'scale-110 ring-4 ring-amber-400/50 bg-neutral-900' : ''
@@ -445,19 +404,21 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
             {/* Left Box: Original */}
             <div className="relative w-full h-full min-h-[260px] md:min-h-[540px] rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center bg-black shadow-inner">
               <video
-                ref={sideBySideOrigVideoRef}
+                ref={sideBySideOrigRef}
                 src={videoSrc}
                 playsInline
                 loop
-                muted
-                className="w-full h-full object-contain"
-                onLoadedMetadata={() => {
-                  if (sideBySideOrigVideoRef.current && originalVideoRef.current) {
-                    sideBySideOrigVideoRef.current.currentTime = originalVideoRef.current.currentTime;
+                muted={isMuted}
+                className="w-full h-full object-contain pointer-events-none"
+                onTimeUpdate={() => {
+                  if (sideBySideOrigRef.current) {
+                    setCurrentTime(sideBySideOrigRef.current.currentTime);
                   }
                 }}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
               />
-              <div className="absolute top-3 left-3 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-300 border border-white/10 flex items-center gap-1.5 shadow-md">
+              <div className="absolute top-3 left-3 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-300 border border-white/10 flex items-center gap-1.5 shadow-md pointer-events-none">
                 <Film className="w-3.5 h-3.5 text-neutral-400" />
                 <span>Original Video</span>
               </div>
@@ -465,11 +426,16 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
 
             {/* Right Box: Enhanced 8K */}
             <div className="relative w-full h-full min-h-[260px] md:min-h-[540px] rounded-xl overflow-hidden border-2 border-amber-500/50 flex items-center justify-center bg-black shadow-inner">
-              <canvas
-                ref={enhancedCanvasRef}
-                className="w-full h-full object-contain"
+              <video
+                ref={sideBySideEnhRef}
+                src={videoSrc}
+                playsInline
+                loop
+                muted
+                style={{ filter: cssFilter }}
+                className="w-full h-full object-contain pointer-events-none"
               />
-              <div className="absolute top-3 left-3 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-md">
+              <div className="absolute top-3 left-3 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-md pointer-events-none">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>8K Enhanced (UHD Dynamic)</span>
               </div>
@@ -480,11 +446,23 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
         {/* ================= VIEW MODE 3: FULL ENHANCED 8K VIEW ================= */}
         {viewMode === 'enhancedOnly' && (
           <div className="relative w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center bg-black">
-            <canvas
-              ref={enhancedCanvasRef}
-              className="w-full h-full object-contain"
+            <video
+              ref={masterVideoRef}
+              src={videoSrc}
+              playsInline
+              loop
+              muted={isMuted}
+              style={{ filter: cssFilter }}
+              className="w-full h-full object-contain pointer-events-none"
+              onTimeUpdate={() => {
+                if (masterVideoRef.current) {
+                  setCurrentTime(masterVideoRef.current.currentTime);
+                }
+              }}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
             />
-            <div className="absolute top-4 right-4 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
+            <div className="absolute top-4 right-4 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-none">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>Full 8K Enhanced Video View</span>
             </div>
@@ -534,12 +512,16 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
             <button
               type="button"
               onClick={() => {
-                if (originalVideoRef.current) {
-                  originalVideoRef.current.currentTime = 0;
-                  if (splitOrigVideoRef.current) splitOrigVideoRef.current.currentTime = 0;
-                  if (sideBySideOrigVideoRef.current) sideBySideOrigVideoRef.current.currentTime = 0;
-                  renderFrame();
-                }
+                const allVideos = [
+                  masterVideoRef.current,
+                  enhancedVideoRef.current,
+                  sideBySideOrigRef.current,
+                  sideBySideEnhRef.current,
+                ];
+                allVideos.forEach((v) => {
+                  if (v) v.currentTime = 0;
+                });
+                setCurrentTime(0);
               }}
               className="p-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl transition-colors cursor-pointer"
               title="Restart Video from Beginning"
@@ -565,9 +547,15 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                   type="button"
                   onClick={() => {
                     setPlaybackRate(rate);
-                    if (originalVideoRef.current) originalVideoRef.current.playbackRate = rate;
-                    if (splitOrigVideoRef.current) splitOrigVideoRef.current.playbackRate = rate;
-                    if (sideBySideOrigVideoRef.current) sideBySideOrigVideoRef.current.playbackRate = rate;
+                    const allVideos = [
+                      masterVideoRef.current,
+                      enhancedVideoRef.current,
+                      sideBySideOrigRef.current,
+                      sideBySideEnhRef.current,
+                    ];
+                    allVideos.forEach((v) => {
+                      if (v) v.playbackRate = rate;
+                    });
                   }}
                   className={`px-2 py-0.5 rounded-md text-[11px] font-bold cursor-pointer transition-colors ${
                     playbackRate === rate ? 'bg-amber-400 text-neutral-950' : 'text-neutral-400 hover:text-white'

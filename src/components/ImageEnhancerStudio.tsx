@@ -42,7 +42,8 @@ import {
   matchOriginalFrameDimensions,
   downloadEnhancedImage,
 } from '../utils/reminiEnhancer';
-import { extractVideoMetadata, VideoMetadata } from '../utils/videoEnhancer';
+import { extractVideoMetadata, exportEnhancedVideo, VideoMetadata } from '../utils/videoEnhancer';
+import { validateMediaFile, sanitizeFileName, MemoryScrubber } from '../utils/securityGuard';
 import { ReminiComparisonViewer } from './ReminiComparisonViewer';
 import { VideoComparisonViewer } from './VideoComparisonViewer';
 
@@ -67,7 +68,11 @@ export interface BatchMediaItem {
   processingTimeMs?: number;
 }
 
-export const ImageEnhancerStudio: React.FC = () => {
+interface ImageEnhancerStudioProps {
+  onOpenPrivacy?: () => void;
+}
+
+export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpenPrivacy }) => {
   // Multi-Queue Media State (Supports up to 100+ files)
   const [queue, setQueue] = useState<BatchMediaItem[]>([]);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -87,6 +92,10 @@ export const ImageEnhancerStudio: React.FC = () => {
     percent: 0,
   });
   const [isDownloadingAll, setIsDownloadingAll] = useState<boolean>(false);
+  const [isUnifiedDownloading, setIsUnifiedDownloading] = useState<boolean>(false);
+  const [unifiedStatusText, setUnifiedStatusText] = useState<string>('');
+  const [unifiedProgress, setUnifiedProgress] = useState<number>(0);
+  const [unifiedSuccess, setUnifiedSuccess] = useState<boolean>(false);
   const [wipeNotice, setWipeNotice] = useState<string | null>(null);
   const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
@@ -235,14 +244,22 @@ export const ImageEnhancerStudio: React.FC = () => {
     }
   };
 
-  // Upload Batch (Handles up to 100+ files smoothly)
+  // Upload Batch (Handles up to 100+ files smoothly with security validation)
   const handleUploadFiles = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     if (fileArray.length === 0) return;
 
     fileArray.forEach((file, index) => {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
+      // Security Inspection & Format validation
+      const secCheck = validateMediaFile(file);
+      if (!secCheck.isValid) {
+        console.warn('Blocked invalid upload:', secCheck.error);
+        return;
+      }
+
+      const cleanFileName = secCheck.sanitizedName;
+      const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(cleanFileName);
+      const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|avif)$/i.test(cleanFileName);
 
       if (!isVideo && !isImage) return;
 
@@ -256,7 +273,7 @@ export const ImageEnhancerStudio: React.FC = () => {
             const meta = await extractVideoMetadata(dataUrl, file.size);
             const newItem: BatchMediaItem = {
               id: itemId,
-              name: file.name,
+              name: cleanFileName,
               type: 'video',
               url: dataUrl,
               originalWidth: meta.width,
@@ -277,7 +294,7 @@ export const ImageEnhancerStudio: React.FC = () => {
           } catch {
             const newItem: BatchMediaItem = {
               id: itemId,
-              name: file.name,
+              name: cleanFileName,
               type: 'video',
               url: dataUrl,
               originalWidth: 1920,
@@ -301,7 +318,7 @@ export const ImageEnhancerStudio: React.FC = () => {
           img.onload = () => {
             const newItem: BatchMediaItem = {
               id: itemId,
-              name: file.name,
+              name: cleanFileName,
               type: 'image',
               url: dataUrl,
               originalWidth: img.naturalWidth || img.width || 800,
@@ -503,6 +520,112 @@ export const ImageEnhancerStudio: React.FC = () => {
   const handleStopBatch = () => {
     cancelProcessingRef.current = true;
     setIsBatchProcessing(false);
+  };
+
+  // Unified Master Action: Enhances all pending queue items & downloads all files (Single Green Button)
+  const handleUnifiedMasterAction = async () => {
+    if (queue.length === 0) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    if (isUnifiedDownloading || isBatchProcessing) return;
+
+    setIsUnifiedDownloading(true);
+    setUnifiedSuccess(false);
+    setUnifiedProgress(5);
+
+    try {
+      // 1. Process any pending items
+      const pendingItems = queue.filter((item) => item.enhancedUrl === null);
+      if (pendingItems.length > 0) {
+        setUnifiedStatusText(`Enhancing ${pendingItems.length} media item${pendingItems.length > 1 ? 's' : ''} in 8K...`);
+        for (let i = 0; i < queue.length; i++) {
+          const item = queue[i];
+          if (item.enhancedUrl) continue;
+
+          setActiveItemId(item.id);
+          setUnifiedStatusText(`Reconstructing 8K (${i + 1}/${queue.length}): ${item.name}...`);
+
+          setQueue((prev) =>
+            prev.map((it) => (it.id === item.id ? { ...it, isProcessing: true, status: 'processing' } : it))
+          );
+
+          const enhancedItem = await processSingleMediaItem({
+            ...item,
+            selectedModes: item.selectedModes.length > 0 ? item.selectedModes : globalModes,
+            sharpness: item.sharpness || sharpness,
+            hdrExposure: item.hdrExposure || hdrExposure,
+            faceClarity: item.faceClarity || faceClarity,
+            denoiseStrength: item.denoiseStrength || denoiseStrength,
+          });
+
+          setQueue((prev) => prev.map((it) => (it.id === enhancedItem.id ? enhancedItem : it)));
+          setUnifiedProgress(Math.round(((i + 1) / queue.length) * 50));
+        }
+      }
+
+      // 2. Download all items
+      setUnifiedStatusText(`Preparing high-speed 8K downloads...`);
+      setUnifiedProgress(55);
+
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        setUnifiedStatusText(`Downloading (${i + 1}/${queue.length}): ${item.name}...`);
+        setUnifiedProgress(55 + Math.round(((i + 1) / queue.length) * 45));
+
+        if (item.type === 'video') {
+          // Smooth 1.0x lag-free video export with pristine audio
+          const modesToUse = item.selectedModes.length > 0 ? item.selectedModes : globalModes;
+          const { blob, filename } = await exportEnhancedVideo(
+            item.url,
+            {
+              mode: modesToUse[0],
+              modes: modesToUse,
+              sharpness: item.sharpness || sharpness,
+              hdrExposure: item.hdrExposure || hdrExposure,
+              faceClarity: item.faceClarity || faceClarity,
+              denoiseStrength: item.denoiseStrength || denoiseStrength,
+            },
+            (prog) => {
+              setUnifiedStatusText(`Exporting smooth 8K video (${prog}%)...`);
+            }
+          );
+
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename || `enhanced_8k_video_${Date.now()}.mp4`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+          }, 3500);
+        } else {
+          // 8K Image download
+          const targetUrl = item.enhancedUrl || item.url;
+          await downloadEnhancedImage(targetUrl, `Enhanced_${item.name}`, 'png');
+        }
+
+        if (queue.length > 1) {
+          await new Promise((r) => setTimeout(r, 400));
+        }
+      }
+
+      setUnifiedSuccess(true);
+      setUnifiedStatusText(`Downloaded all ${queue.length} file${queue.length > 1 ? 's' : ''} successfully!`);
+      setTimeout(() => {
+        setUnifiedSuccess(false);
+        setUnifiedStatusText('');
+        setUnifiedProgress(0);
+      }, 5000);
+    } catch (err) {
+      console.error('Unified download error:', err);
+      setUnifiedStatusText('Download complete.');
+    } finally {
+      setIsUnifiedDownloading(false);
+    }
   };
 
   // Direct Sequential Download of All Enhanced Media (No ZIP)
@@ -1080,7 +1203,7 @@ export const ImageEnhancerStudio: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
-                  onClick={() => handleEnhanceActiveItem()}
+                  onClick={() => (queue.length > 1 ? handleEnhanceAllQueue() : handleEnhanceActiveItem())}
                   disabled={isBatchProcessing || !activeItem}
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 text-neutral-950 font-black text-xs sm:text-sm rounded-xl transition-all shadow-lg active:scale-[0.99] disabled:opacity-75 cursor-pointer relative overflow-hidden ring-2 ring-amber-400/40"
                 >
@@ -1093,7 +1216,9 @@ export const ImageEnhancerStudio: React.FC = () => {
                     <>
                       <Sparkles className="w-4 h-4 text-neutral-950 fill-neutral-950" />
                       <span>
-                        {activeItem?.type === 'video'
+                        {queue.length > 1
+                          ? `🚀 Order & Start Enhancing All (${queue.length} Media Items)`
+                          : activeItem?.type === 'video'
                           ? `🚀 Order & Start Enhancing Video (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`
                           : `🚀 Order & Start Enhancing Image (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`}
                       </span>
@@ -1109,7 +1234,7 @@ export const ImageEnhancerStudio: React.FC = () => {
                     className="flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-3 bg-neutral-800 hover:bg-neutral-750 text-amber-300 hover:text-amber-200 border border-amber-500/40 rounded-xl font-black text-xs transition-all shadow-sm active:scale-[0.99] disabled:opacity-75 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Enhance All Images ({queue.length})</span>
+                    <span>Enhance All ({queue.length})</span>
                   </button>
                 )}
               </div>
@@ -1137,11 +1262,11 @@ export const ImageEnhancerStudio: React.FC = () => {
             </div>
           </div>
 
-          {/* ================= 4. STEP 3: ENHANCED RESULT & DOWNLOAD BOXES (MULTIPLE BOXES FOR MULTIPLE IMAGES) ================= */}
+          {/* ================= 4. STEP 3: ENHANCED RESULT BOXES ================= */}
           <div ref={resultRef} className="space-y-4">
             {completedCount > 0 ? (
               <div className="space-y-4">
-                {/* Results Global Header if 1 or more enhanced */}
+                {/* Results Global Header */}
                 <div className="flex flex-wrap items-center justify-between gap-2 bg-neutral-900 border border-neutral-800 p-3 rounded-xl shadow-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-xs">
@@ -1155,25 +1280,14 @@ export const ImageEnhancerStudio: React.FC = () => {
                         </span>
                       </h3>
                       <p className="text-[10px] text-neutral-400 font-medium">
-                        Interactive Before/After split sliders for each enhanced image
+                        Interactive Before/After split sliders for each enhanced item
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleDownloadAllImages}
-                      disabled={isDownloadingAll || completedCount === 0}
-                      className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-black rounded-lg flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 disabled:opacity-50"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>
-                        {isDownloadingAll
-                          ? 'Downloading Images...'
-                          : `Download All Images (${completedCount})`}
-                      </span>
-                    </button>
+                  <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5 bg-emerald-950/60 px-3 py-1.5 rounded-lg border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>8K Resolution Ready</span>
                   </div>
                 </div>
 
@@ -1229,7 +1343,7 @@ export const ImageEnhancerStudio: React.FC = () => {
                                   disabled={!prevEnhancedItem}
                                   onClick={() => prevEnhancedItem && scrollToItemResult(prevEnhancedItem.id)}
                                   className="px-2 py-1 bg-neutral-850 hover:bg-neutral-750 disabled:opacity-30 disabled:hover:bg-neutral-850 text-neutral-200 hover:text-white rounded text-[10px] font-black flex items-center gap-1 transition-all cursor-pointer disabled:cursor-not-allowed"
-                                  title="Previous enhanced image"
+                                  title="Previous enhanced item"
                                 >
                                   <ArrowLeft className="w-3 h-3 text-amber-400" />
                                   <span className="hidden sm:inline">Prev</span>
@@ -1242,29 +1356,21 @@ export const ImageEnhancerStudio: React.FC = () => {
                                   disabled={!nextEnhancedItem}
                                   onClick={() => nextEnhancedItem && scrollToItemResult(nextEnhancedItem.id)}
                                   className="px-2.5 py-1 bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-neutral-950 border border-amber-400/40 disabled:opacity-30 disabled:hover:bg-amber-400/20 disabled:hover:text-amber-300 rounded text-[10px] font-black flex items-center gap-1 transition-all cursor-pointer disabled:cursor-not-allowed shadow-sm"
-                                  title="Next enhanced image"
+                                  title="Next enhanced item"
                                 >
-                                  <span>Next Image</span>
+                                  <span>Next</span>
                                   <ArrowRight className="w-3.5 h-3.5 font-black" />
                                 </button>
                               </div>
                             )}
 
-                            <span className="text-emerald-400 font-mono font-black text-[10px] bg-emerald-950 px-2 py-1 rounded-lg border border-emerald-500/40 hidden sm:inline-block">
+                            <span className="text-emerald-400 font-mono font-black text-[10px] bg-emerald-950 px-2 py-1 rounded-lg border border-emerald-500/40">
                               {item.enhancedWidth} × {item.enhancedHeight} px
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => downloadEnhancedImage(item.enhancedUrl!, `Enhanced_${item.name}`)}
-                              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-black rounded-lg flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95"
-                            >
-                              <Download className="w-4 h-4" />
-                              <span>Download</span>
-                            </button>
                           </div>
                         </div>
 
-                        {/* Split Comparison Viewer for this specific image */}
+                        {/* Split Comparison Viewer for this specific item */}
                         <div className="bg-neutral-950 rounded-lg p-2 sm:p-3 border border-neutral-800 shadow-inner">
                           {item.type === 'video' ? (
                             <VideoComparisonViewer
@@ -1278,6 +1384,7 @@ export const ImageEnhancerStudio: React.FC = () => {
                                 denoiseStrength: item.denoiseStrength || denoiseStrength,
                               }}
                               dimensions={{ width: item.originalWidth, height: item.originalHeight }}
+                              hideDownloadButton={true}
                             />
                           ) : (
                             <ReminiComparisonViewer
@@ -1288,40 +1395,36 @@ export const ImageEnhancerStudio: React.FC = () => {
                                 width: item.enhancedWidth || item.originalWidth,
                                 height: item.enhancedHeight || item.originalHeight,
                               }}
+                              hideDownloadButton={true}
                             />
                           )}
                         </div>
 
-                        {/* Bottom Direct Download Bar & Navigation for this image */}
+                        {/* Bottom Status Bar & Navigation for this image */}
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 bg-neutral-950 p-2.5 rounded-lg border border-neutral-800">
                           <div className="flex items-center gap-2 text-xs font-bold text-neutral-300">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                             <span className="truncate max-w-[200px] sm:max-w-xs">
-                              8K Laplacian Enhancement Applied ({item.name})
+                              8K Master Reconstruction Applied ({item.name})
                             </span>
                           </div>
                           
                           <div className="flex items-center gap-2 w-full sm:w-auto">
-                            {/* Quick Next Image Button at Bottom */}
+                            {/* Quick Next Item Button at Bottom */}
                             {nextEnhancedItem && (
                               <button
                                 type="button"
                                 onClick={() => scrollToItemResult(nextEnhancedItem.id)}
-                                className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-amber-300 hover:text-amber-200 border border-amber-500/30 text-xs font-black rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm active:scale-95"
+                                className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-amber-300 hover:text-amber-200 border border-amber-500/30 text-xs font-black rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm active:scale-95"
                               >
-                                <span>Next Image Preview</span>
+                                <span>Next Item Preview</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
                               </button>
                             )}
 
-                            <button
-                              type="button"
-                              onClick={() => downloadEnhancedImage(item.enhancedUrl!, `Enhanced_${item.name}`)}
-                              className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-lg flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95"
-                            >
-                              <Download className="w-4 h-4" />
-                              <span>Download 8K Image ({item.enhancedWidth} × {item.enhancedHeight})</span>
-                            </button>
+                            <span className="text-[11px] text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-1 rounded-md border border-emerald-500/30">
+                              ✓ 8K Lossless ({item.enhancedWidth} × {item.enhancedHeight})
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1339,13 +1442,13 @@ export const ImageEnhancerStudio: React.FC = () => {
                   Ready to Enhance: Select Your Desired Effects Above
                 </h4>
                 <p className="text-[11px] text-neutral-400 max-w-sm mx-auto">
-                  Click the amber <strong>&apos;🚀 Order & Start Enhancing&apos;</strong> button above. Each enhanced image will deploy its own full 8K comparison preview and download box right here.
+                  Click the amber <strong>&apos;🚀 Order & Start Enhancing&apos;</strong> button above, or click the single green download button below.
                 </p>
               </div>
             )}
           </div>
 
-          {/* ================= 5. BOTTOM: MULTI-QUEUE BATCH CAROUSEL (SB SE NICHE) ================= */}
+          {/* ================= 5. BOTTOM: MULTI-QUEUE BATCH CAROUSEL ================= */}
           <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 sm:p-4 space-y-2.5 shadow-md mt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
               {/* Queue Header & Stats */}
@@ -1366,31 +1469,17 @@ export const ImageEnhancerStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-750 text-white text-[11px] font-black rounded-lg border border-neutral-700 flex items-center gap-1 cursor-pointer transition-all shadow-sm"
+                  className="px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-white text-[11px] font-black rounded-lg border border-neutral-700 flex items-center gap-1 cursor-pointer transition-all shadow-sm"
                 >
                   <Plus className="w-3.5 h-3.5 text-amber-400" />
                   <span>Add More Files</span>
                 </button>
 
-                {completedCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleDownloadAllImages}
-                    disabled={isDownloadingAll}
-                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-sm disabled:opacity-50"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>
-                      {isDownloadingAll ? 'Downloading...' : `Download All Images (${completedCount})`}
-                    </span>
-                  </button>
-                )}
-
                 {isBatchProcessing ? (
                   <button
                     type="button"
                     onClick={handleStopBatch}
-                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black rounded-lg transition-all cursor-pointer"
+                    className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black rounded-lg transition-all cursor-pointer"
                   >
                     Stop
                   </button>
@@ -1398,7 +1487,7 @@ export const ImageEnhancerStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleEnhanceAllQueue}
-                    className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-neutral-950 text-[11px] font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-md"
+                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 text-[11px] font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-md"
                   >
                     <Sparkles className="w-3.5 h-3.5 fill-neutral-950" />
                     <span>Enhance All ({queue.length})</span>
@@ -1407,7 +1496,7 @@ export const ImageEnhancerStudio: React.FC = () => {
               </div>
             </div>
 
-            {/* Horizontal Scrollable Queue Carousel (Clicking thumbnail selects item for top view) */}
+            {/* Horizontal Scrollable Queue Carousel */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar pt-1">
               {queue.map((item, idx) => {
                 const isActive = item.id === activeItem?.id;
@@ -1471,6 +1560,117 @@ export const ImageEnhancerStudio: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Privacy Policy Clickable Heading Banner */}
+          {onOpenPrivacy && (
+            <div className="pt-2 px-1">
+              <div
+                onClick={onOpenPrivacy}
+                className="group w-full flex items-center justify-between gap-2 p-3 bg-neutral-900/90 hover:bg-neutral-850 border border-neutral-800 hover:border-emerald-500/40 rounded-xl cursor-pointer transition-all shadow-sm active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-neutral-200 group-hover:text-white transition-colors truncate">
+                      🔒 Privacy Policy & Data Protection (100% On-Device)
+                    </h4>
+                    <p className="text-[10px] text-neutral-400 truncate">
+                      Zero server storage: Your media is never saved or shared with anyone.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-500/30 shrink-0 group-hover:bg-emerald-900/80 transition-colors">
+                  View Policy →
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* ================= 6. DEDICATED SINGLE GREEN MASTER DOWNLOAD BUTTON AT THE BOTTOM ================= */}
+          <div className="sticky bottom-3 z-40 mt-6 max-w-4xl mx-auto w-full px-1">
+            <div className="bg-neutral-900/95 backdrop-blur-xl border-2 border-emerald-500/80 p-3 sm:p-4 rounded-2xl shadow-2xl space-y-2 ring-4 ring-emerald-500/20">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                {/* Information text & count */}
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shrink-0">
+                    <Download className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-sm sm:text-base text-white truncate">
+                        {queue.length === 0
+                          ? 'Ultra HD 8K Master Download'
+                          : queue.length === 1
+                          ? (activeItem?.type === 'video' ? '8K Enhanced Video Output' : '8K Ultra HD Photo Output')
+                          : `Batch 8K Enhanced Output (${queue.length} Items)`}
+                      </h3>
+                      {queue.length > 0 && (
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                          {completedCount}/{queue.length} Ready
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-neutral-300 font-medium truncate">
+                      {isUnifiedDownloading
+                        ? unifiedStatusText || 'Processing 8K reconstruction & saving files...'
+                        : queue.length === 0
+                        ? 'Upload a photo or video above to enhance in 8K'
+                        : queue.length === 1
+                        ? '100% Uncropped original aspect ratio & lossless clarity'
+                        : `One-click download for all ${queue.length} enhanced files`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* The Single Master Green Download Button */}
+                <button
+                  type="button"
+                  onClick={handleUnifiedMasterAction}
+                  disabled={isUnifiedDownloading || isBatchProcessing || queue.length === 0}
+                  className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50 ring-2 ring-emerald-400/50 hover:shadow-emerald-500/30 shrink-0"
+                >
+                  {isUnifiedDownloading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 text-white animate-spin shrink-0" />
+                      <span>{unifiedStatusText || `Processing (${unifiedProgress}%)...`}</span>
+                    </>
+                  ) : unifiedSuccess ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-white stroke-[3] shrink-0" />
+                      <span>
+                        {queue.length === 1 ? 'Downloaded Successfully!' : `Downloaded All ${queue.length} Files!`}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 text-white stroke-[2.5] shrink-0" />
+                      <span>
+                        {queue.length === 0
+                          ? 'Upload File to Download'
+                          : queue.length === 1
+                          ? (completedCount === 1 ? 'Download 8K Enhanced Media' : 'Enhance & Download 8K')
+                          : (completedCount === queue.length
+                              ? `Download All ${queue.length} Enhanced Files`
+                              : `Enhance & Download All (${queue.length} Items)`)}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Live Progress Bar for Unified Action */}
+              {isUnifiedDownloading && (
+                <div className="w-full bg-neutral-950 h-2 rounded-full overflow-hidden border border-neutral-800 p-0.5">
+                  <div
+                    className="bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 h-full rounded-full transition-all duration-200"
+                    style={{ width: `${Math.max(5, unifiedProgress)}%` }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

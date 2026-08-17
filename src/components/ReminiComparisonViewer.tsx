@@ -32,6 +32,7 @@ interface ReminiComparisonViewerProps {
   enhancedDimensions?: { width: number; height: number };
   onClose?: () => void;
   onUseForVideo?: (enhancedImg: string) => void;
+  hideDownloadButton?: boolean;
 }
 
 export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
@@ -41,6 +42,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
   enhancedDimensions,
   onClose,
   onUseForVideo,
+  hideDownloadButton = true, // Unified bottom green download button used in Studio
 }) => {
   const [sliderPosition, setSliderPosition] = useState<number>(50); // percentage (0 - 100)
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -531,83 +533,84 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
         </div>
 
         {/* Action Buttons with Download Menu */}
-        <div className="flex items-center gap-2 w-full">
+        <div className="flex items-center justify-between gap-2 w-full">
           {/* Copy Button */}
           <button
             type="button"
             onClick={handleCopyClipboard}
-            className="flex items-center justify-center gap-1 px-3 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded-xl border border-neutral-700 transition-all cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded-xl border border-neutral-700 transition-all cursor-pointer shrink-0"
             title="Copy Image to Clipboard"
           >
             {copySuccess ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
-            <span className="text-xs">{copySuccess ? 'Copied!' : 'Copy'}</span>
+            <span className="text-xs">{copySuccess ? 'Copied!' : 'Copy to Clipboard'}</span>
           </button>
 
-          {/* Primary 8K Download Button & Dropdown */}
-          <div className="relative flex items-center flex-1" ref={downloadMenuRef}>
-            <button
-              type="button"
-              onClick={() => handleDirectDownload('png')}
-              disabled={isDownloading}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-l-xl shadow-lg transition-all cursor-pointer active:scale-98 disabled:opacity-50"
-            >
-              {downloadSuccess ? (
-                <>
-                  <Check className="w-4 h-4 text-white" />
-                  <span>Saved!</span>
-                </>
-              ) : isDownloading ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 text-white" />
-                  <span>Download 8K</span>
-                </>
+          {!hideDownloadButton && (
+            <div className="relative flex items-center flex-1" ref={downloadMenuRef}>
+              <button
+                type="button"
+                onClick={() => handleDirectDownload('png')}
+                disabled={isDownloading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-l-xl shadow-lg transition-all cursor-pointer active:scale-98 disabled:opacity-50"
+              >
+                {downloadSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-white" />
+                    <span>Saved!</span>
+                  </>
+                ) : isDownloading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-white" />
+                    <span>Download 8K</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                className="p-2.5 bg-emerald-700 hover:bg-emerald-600 text-white border-l border-emerald-600 rounded-r-xl transition-all cursor-pointer"
+                title="More Options"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Dropdown Options */}
+              {showDownloadMenu && (
+                <div className="absolute right-0 bottom-12 w-52 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-1.5 z-50 space-y-1 animate-fadeIn">
+                  <button
+                    type="button"
+                    onClick={() => handleDirectDownload('png')}
+                    className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer font-medium"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Download PNG (Lossless)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDirectDownload('jpeg')}
+                    className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Download JPG</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenFullSize}
+                    className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Open in New Tab</span>
+                  </button>
+                </div>
               )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-              className="p-2.5 bg-emerald-700 hover:bg-emerald-600 text-white border-l border-emerald-600 rounded-r-xl transition-all cursor-pointer"
-              title="More Options"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Dropdown Options */}
-            {showDownloadMenu && (
-              <div className="absolute right-0 bottom-12 w-52 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-1.5 z-50 space-y-1 animate-fadeIn">
-                <button
-                  type="button"
-                  onClick={() => handleDirectDownload('png')}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer font-medium"
-                >
-                  <Download className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Download PNG (Lossless)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDirectDownload('jpeg')}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Download JPG</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenFullSize}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 rounded-lg flex items-center gap-2 cursor-pointer"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Open in New Tab</span>
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {onClose && (
             <button
