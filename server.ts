@@ -27,6 +27,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   );
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Safe preview inside container iframe
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https:; font-src 'self' https: data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self';"
+  );
 
   // Zero-Data Retention Architecture: Never cache user media or API outputs
   if (req.path.startsWith('/api/')) {
@@ -172,9 +176,13 @@ function sanitizeString(input: unknown, maxLength = 2000): string {
 
 function isValidBase64Image(data: unknown): boolean {
   if (typeof data !== 'string') return false;
-  if (!data.startsWith('data:image/')) return false;
-  const match = data.match(/^data:image\/(png|jpeg|jpg|webp|gif|bmp);base64,[A-Za-z0-9+/=]+$/);
-  return !!match || data.length > 50; // allow large valid payload format
+  const prefixMatch = data.match(/^data:image\/(png|jpeg|jpg|webp|gif|bmp);base64,/i);
+  if (!prefixMatch) return false;
+  const base64Data = data.slice(prefixMatch[0].length);
+  if (base64Data.length === 0) return false;
+  // Verify valid base64 encoding characters on sample chunk to prevent ReDoS on large payloads
+  const sample = base64Data.length > 4096 ? base64Data.slice(0, 4096) : base64Data;
+  return /^[A-Za-z0-9+/=\r\n]+$/.test(sample);
 }
 
 // Lazy initializer for Gemini client to prevent crashing on boot if key is missing
