@@ -62,21 +62,64 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
   const cssFilter = getEnhancedVideoCssFilter(options);
   const lastTimeUpdateRef = useRef<number>(0);
 
-  // Helper to synchronize active video tags with master only when necessary (e.g. initial start, user seek)
-  const syncVideos = useCallback((targetTime?: number, force = false) => {
+  // Bind native synchronized events across video elements for 0 lag and 60fps hardware sync
+  useEffect(() => {
     const master = masterVideoRef.current;
-    if (!master) return;
-    const time = typeof targetTime === 'number' ? targetTime : master.currentTime;
+    const enh = enhancedVideoRef.current;
+    if (!master || !enh) return;
 
-    const slaveVideos = [enhancedVideoRef.current, sideBySideOrigRef.current, sideBySideEnhRef.current];
-    slaveVideos.forEach((vid) => {
-      if (vid && (force || Math.abs(vid.currentTime - time) > 0.4)) {
-        try {
-          vid.currentTime = time;
-        } catch {}
+    const onMasterPlay = () => {
+      enh.currentTime = master.currentTime;
+      enh.play().catch(() => {});
+      setIsPlaying(true);
+    };
+
+    const onMasterPause = () => {
+      enh.pause();
+      setIsPlaying(false);
+    };
+
+    const onMasterSeeking = () => {
+      enh.currentTime = master.currentTime;
+    };
+
+    const onMasterSeeked = () => {
+      enh.currentTime = master.currentTime;
+    };
+
+    const onMasterRateChange = () => {
+      enh.playbackRate = master.playbackRate;
+    };
+
+    const onMasterWaiting = () => {
+      enh.pause();
+    };
+
+    const onMasterPlaying = () => {
+      if (enh.paused) {
+        enh.currentTime = master.currentTime;
+        enh.play().catch(() => {});
       }
-    });
-  }, []);
+    };
+
+    master.addEventListener('play', onMasterPlay);
+    master.addEventListener('pause', onMasterPause);
+    master.addEventListener('seeking', onMasterSeeking);
+    master.addEventListener('seeked', onMasterSeeked);
+    master.addEventListener('ratechange', onMasterRateChange);
+    master.addEventListener('waiting', onMasterWaiting);
+    master.addEventListener('playing', onMasterPlaying);
+
+    return () => {
+      master.removeEventListener('play', onMasterPlay);
+      master.removeEventListener('pause', onMasterPause);
+      master.removeEventListener('seeking', onMasterSeeking);
+      master.removeEventListener('seeked', onMasterSeeked);
+      master.removeEventListener('ratechange', onMasterRateChange);
+      master.removeEventListener('waiting', onMasterWaiting);
+      master.removeEventListener('playing', onMasterPlaying);
+    };
+  }, [viewMode, videoSrc]);
 
   // Synchronize playback state across active videos
   const togglePlay = () => {
@@ -84,12 +127,13 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
     if (!master) return;
 
     if (master.paused) {
-      // Sync timestamps once before playing to guarantee instant alignment
-      syncVideos(master.currentTime, true);
-      master.play().catch(() => {});
-      if (enhancedVideoRef.current) enhancedVideoRef.current.play().catch(() => {});
+      if (enhancedVideoRef.current) {
+        enhancedVideoRef.current.currentTime = master.currentTime;
+        enhancedVideoRef.current.play().catch(() => {});
+      }
       if (sideBySideOrigRef.current) sideBySideOrigRef.current.play().catch(() => {});
       if (sideBySideEnhRef.current) sideBySideEnhRef.current.play().catch(() => {});
+      master.play().catch(() => {});
       setIsPlaying(true);
     } else {
       master.pause();

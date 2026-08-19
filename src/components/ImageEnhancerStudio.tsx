@@ -36,6 +36,9 @@ import {
   Filter,
   ArrowDown,
   RotateCcw,
+  Crown,
+  Clapperboard,
+  Gem,
 } from 'lucide-react';
 import {
   processUltraHDEnhance,
@@ -222,6 +225,36 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
       setHdrExposure(4);
       setFaceClarity(4);
       setDenoiseStrength(5);
+    } else if (mode === 'diamond-clarity-8k') {
+      setSharpness(10);
+      setHdrExposure(4);
+      setFaceClarity(5);
+      setDenoiseStrength(4);
+    } else if (mode === 'studio-portrait-pro') {
+      setSharpness(8);
+      setHdrExposure(4);
+      setFaceClarity(5);
+      setDenoiseStrength(4);
+    } else if (mode === 'imax-70mm-master') {
+      setSharpness(9);
+      setHdrExposure(5);
+      setFaceClarity(4);
+      setDenoiseStrength(4);
+    } else if (mode === 'vivid-super-color') {
+      setSharpness(8);
+      setHdrExposure(5);
+      setFaceClarity(4);
+      setDenoiseStrength(4);
+    } else if (mode === 'action-motion-sharp') {
+      setSharpness(10);
+      setHdrExposure(4);
+      setFaceClarity(4);
+      setDenoiseStrength(3);
+    } else if (mode === 'social-media-pop') {
+      setSharpness(9);
+      setHdrExposure(5);
+      setFaceClarity(5);
+      setDenoiseStrength(4);
     }
   };
 
@@ -826,6 +859,60 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
       desc: 'Sharpens faded archival media, restores lost contrast and dynamic color.',
       icon: RefreshCw,
       accent: 'text-amber-500',
+    },
+    {
+      id: 'diamond-clarity-8k',
+      title: 'Diamond 8K Clarity',
+      emoji: '💎',
+      badge: '8K ULTRA',
+      desc: 'Sub-pixel vector acuity, micro-textures & ultra crisp architectural edges.',
+      icon: Gem,
+      accent: 'text-sky-300',
+    },
+    {
+      id: 'studio-portrait-pro',
+      title: 'Studio Portrait AI Pro',
+      emoji: '🌟',
+      badge: 'FASHION',
+      desc: 'Studio lighting tone, eye catchlight specular reflections & refined skin.',
+      icon: Crown,
+      accent: 'text-fuchsia-400',
+    },
+    {
+      id: 'imax-70mm-master',
+      title: 'IMAX 70mm Master',
+      emoji: '🎬',
+      badge: '70MM FILM',
+      desc: 'Cinema-grade expansive dynamic range, rich velvet blacks & analog depth.',
+      icon: Clapperboard,
+      accent: 'text-amber-300',
+    },
+    {
+      id: 'vivid-super-color',
+      title: 'Vivid HDR Super-Color',
+      emoji: '🌈',
+      badge: 'SUPER-COLOR',
+      desc: 'Ultra vibrant natural foliage, radiant sky tones & punchy contrast.',
+      icon: Sparkles,
+      accent: 'text-lime-400',
+    },
+    {
+      id: 'action-motion-sharp',
+      title: 'Action Motion Sharpener',
+      emoji: '🏎️',
+      badge: 'DE-BLUR',
+      desc: 'Extreme high-speed de-blurring kernel for moving videos and action shots.',
+      icon: Zap,
+      accent: 'text-yellow-400',
+    },
+    {
+      id: 'social-media-pop',
+      title: '4K Viral Media Pop',
+      emoji: '📱',
+      badge: 'VIRAL POP',
+      desc: 'High-impact clarity & punch engineered for Reels, Shorts & Thumbnails.',
+      icon: Flame,
+      accent: 'text-pink-400',
     },
   ];
 

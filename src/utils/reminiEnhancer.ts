@@ -26,7 +26,13 @@ export type UltraEnhancePreset =
   | 'teal-orange-hollywood'
   | 'micro-detail-ultra'
   | 'zero-artifact-clean'
-  | 'vintage-revival';
+  | 'vintage-revival'
+  | 'diamond-clarity-8k'
+  | 'studio-portrait-pro'
+  | 'imax-70mm-master'
+  | 'vivid-super-color'
+  | 'action-motion-sharp'
+  | 'social-media-pop';
 
 export interface UltraEnhanceOptions {
   mode?: UltraEnhancePreset;
@@ -427,6 +433,42 @@ export async function processUltraHDEnhance(
               saturateVal += 0.08;
               sepiaVal += 6;
               break;
+            case 'diamond-clarity-8k':
+              // Ultra-Fine Sub-Pixel Micro-Texturing & Architecture/Fabric Precision
+              contrastVal += 0.11;
+              brightnessVal += 0.02;
+              saturateVal += 0.05;
+              break;
+            case 'studio-portrait-pro':
+              // High-End Fashion Studio Magazine Portrait Retouching
+              brightnessVal += 0.05;
+              contrastVal += 0.06;
+              saturateVal += 0.05;
+              break;
+            case 'imax-70mm-master':
+              // Expansive 70mm Large-Format Cinematic Dynamic Range
+              contrastVal += 0.13;
+              brightnessVal += 0.02;
+              saturateVal += 0.08;
+              break;
+            case 'vivid-super-color':
+              // Ultra Vibrant Nature & Landscape Dynamic Tone
+              saturateVal += 0.18;
+              contrastVal += 0.10;
+              brightnessVal += 0.02;
+              break;
+            case 'action-motion-sharp':
+              // Extreme Motion Deblur & High-Speed Acuity
+              contrastVal += 0.12;
+              brightnessVal += 0.03;
+              saturateVal += 0.04;
+              break;
+            case 'social-media-pop':
+              // 4K Ultra Pop Optimized for Reels, Shorts & Social Media
+              contrastVal += 0.12;
+              saturateVal += 0.14;
+              brightnessVal += 0.04;
+              break;
           }
         }
 
@@ -459,7 +501,7 @@ export async function processUltraHDEnhance(
         const hdrAmt = (options.hdrExposure || 3) / 5;
         const faceClarityAmt = (options.faceClarity || 5) / 5;
 
-        const noiseFloor = 11 + (1 - denoiseAmt) * 4;
+        const noiseFloor = 10 + (1 - denoiseAmt) * 4;
         const edgeCeiling = 60;
 
         for (let y = 1; y < h - 1; y++) {
@@ -502,7 +544,7 @@ export async function processUltraHDEnhance(
             const avgGradient = (diffTop + diffBtm + diffLft + diffRgt + (diffTL + diffTR + diffBL + diffBR) * 0.707) / 6.828;
 
             // Remini Face & Eye Iris Catchlight Detection
-            const isEyeOrIris = luma > 10 && luma < 135 && maxGradient > noiseFloor * 1.5;
+            const isEyeOrIris = luma > 10 && luma < 145 && maxGradient > noiseFloor * 1.4;
             const isSkin = r > g && g > b && (r - b) > 10 && luma > 50 && luma < 230;
 
             let baseR = r;
@@ -555,14 +597,14 @@ export async function processUltraHDEnhance(
                 const edgeWeight = Math.min(1.0, (avgGradient - noiseFloor) / (edgeCeiling - noiseFloor));
                 
                 // 500X Macro Rational MTF curve: sharp vector-like micro-edges without ringing or pixel blowout
-                const rawBoost = highPass * sharpnessAmt * 1.45 * edgeWeight;
-                finalBoost = (rawBoost * 48) / (48 + Math.abs(rawBoost));
+                const rawBoost = highPass * sharpnessAmt * 1.85 * edgeWeight;
+                finalBoost = (rawBoost * 54) / (54 + Math.abs(rawBoost));
 
                 // Remini Portrait Face, Specular Iris Catchlight & Hair Micro-Detail
                 if (isEyeOrIris) {
-                  finalBoost += highPass * faceClarityAmt * 0.65 * edgeWeight;
+                  finalBoost += highPass * faceClarityAmt * 0.85 * edgeWeight;
                 } else if (luma >= 25 && luma <= 230) {
-                  finalBoost += highPass * faceClarityAmt * 0.38 * edgeWeight;
+                  finalBoost += highPass * faceClarityAmt * 0.48 * edgeWeight;
                 }
               }
 
@@ -573,12 +615,12 @@ export async function processUltraHDEnhance(
                 if (outVal > 128) {
                   // Smooth highlight roll-off (prevents clipping, recovers sky & reflection textures)
                   const highlightRatio = (outVal - 128) / 127;
-                  const curveBoost = Math.sin(highlightRatio * Math.PI * 0.5) * (255 - outVal) * hdrAmt * 0.32;
+                  const curveBoost = Math.sin(highlightRatio * Math.PI * 0.5) * (255 - outVal) * hdrAmt * 0.35;
                   outVal += curveBoost;
                 } else {
                   // Shadow tone uncrushing (lifts deep blacks while preserving rich contrast)
                   const shadowFactor = Math.pow(1 - outVal / 128, 1.3);
-                  const shadowLift = shadowFactor * hdrAmt * 20;
+                  const shadowLift = shadowFactor * hdrAmt * 24;
                   outVal = Math.min(128, outVal + shadowLift);
                 }
               }
