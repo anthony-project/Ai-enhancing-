@@ -11,11 +11,23 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// Ephemeral server-side salt for one-way anonymization of client IPs / session tokens
+const ANONYMIZATION_SALT = crypto.randomBytes(32).toString('hex');
+
+function anonymizeIdentifier(id: string): string {
+  return crypto.createHash('sha256').update(ANONYMIZATION_SALT + id).digest('hex');
+}
+
 // Disable 'x-powered-by' header to prevent server fingerprinting
 app.disable('x-powered-by');
 
 // Security & Zero-Storage Privacy Headers Middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
+  // Content Security Policy
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; img-src 'self' data: blob: https://images.unsplash.com; media-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self';"
+  );
   // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
   // Enable XSS filtering in browsers
@@ -35,7 +47,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// In-Memory IP Rate Limiter (Defends against API abuse / DDoS without external Redis dependencies)
+// In-Memory Rate Limiter with Cryptographic Anonymization (Defends against API abuse / DDoS without storing IP data)
 interface RateLimitRecord {
   count: number;
   resetTime: number;
@@ -82,7 +94,9 @@ app.get('/api/visitor-stats', (req, res) => {
     (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
     req.socket.remoteAddress ||
     'visitor';
-  const trackingKey = sessionId || clientIp;
+
+  // Cryptographic 1-way anonymization: raw IPs or session tokens are NEVER stored in RAM
+  const trackingKey = anonymizeIdentifier(sessionId || clientIp);
   const now = Date.now();
 
   // Track active online user (active within last 45 seconds)
@@ -112,9 +126,9 @@ app.get('/api/visitor-stats', (req, res) => {
 // Cleanup stale rate limit entries every 5 minutes
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, record] of ipRateLimitMap.entries()) {
+  for (const [key, record] of ipRateLimitMap.entries()) {
     if (now > record.resetTime) {
-      ipRateLimitMap.delete(ip);
+      ipRateLimitMap.delete(key);
     }
   }
 }, 5 * 60 * 1000);
@@ -122,7 +136,8 @@ setInterval(() => {
 function createRateLimiter(maxRequests: number, windowMs: number) {
   return (req: Request, res: Response, next: NextFunction) => {
     const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown-ip';
-    const key = `${req.path}:${clientIp}`;
+    const anonIp = anonymizeIdentifier(clientIp);
+    const key = `${req.path}:${anonIp}`;
     const now = Date.now();
 
     const record = ipRateLimitMap.get(key);
