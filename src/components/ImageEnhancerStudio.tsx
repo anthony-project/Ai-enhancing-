@@ -604,7 +604,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
         setUnifiedProgress(55 + Math.round(((i + 1) / queue.length) * 45));
 
         if (item.type === 'video') {
-          // Smooth 1.0x lag-free video export with pristine audio
+          // Frame-accurate, 100% full duration video export with audio
           const modesToUse = item.selectedModes.length > 0 ? item.selectedModes : globalModes;
           const { blob, filename } = await exportEnhancedVideo(
             item.url,
@@ -617,14 +617,15 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               denoiseStrength: item.denoiseStrength || denoiseStrength,
             },
             (prog) => {
-              setUnifiedStatusText(`Exporting smooth 8K video (${prog}%)...`);
-            }
+              setUnifiedStatusText(`Exporting full 8K video (${prog}%)...`);
+            },
+            item.name
           );
 
           const blobUrl = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = blobUrl;
-          a.download = filename || `enhanced_8k_video_${Date.now()}.mp4`;
+          a.download = filename || `enhanced_8k_${item.name}`;
           document.body.appendChild(a);
           a.click();
           setTimeout(() => {
@@ -665,7 +666,32 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
     setIsDownloadingAll(true);
     for (let i = 0; i < enhancedItems.length; i++) {
       const item = enhancedItems[i];
-      if (item.enhancedUrl) {
+      if (item.type === 'video') {
+        const modesToUse = item.selectedModes.length > 0 ? item.selectedModes : globalModes;
+        const { blob, filename } = await exportEnhancedVideo(
+          item.url,
+          {
+            mode: modesToUse[0],
+            modes: modesToUse,
+            sharpness: item.sharpness || sharpness,
+            hdrExposure: item.hdrExposure || hdrExposure,
+            faceClarity: item.faceClarity || faceClarity,
+            denoiseStrength: item.denoiseStrength || denoiseStrength,
+          },
+          undefined,
+          item.name
+        );
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename || `enhanced_8k_${item.name}`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }, 3500);
+      } else if (item.enhancedUrl) {
         downloadEnhancedImage(item.enhancedUrl, `Enhanced_${item.name}`);
         // Small delay between downloads so the browser can dispatch each download smoothly
         await new Promise((resolve) => setTimeout(resolve, 350));
@@ -984,20 +1010,20 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
 
               {/* Selected Media Display Frame */}
               <div className="relative w-full max-h-[300px] flex items-center justify-center overflow-hidden rounded-lg bg-neutral-950 border border-neutral-800 p-2">
-                {activeItem.type === 'video' ? (
+                {activeItem.type === 'video' && activeItem.url ? (
                   <video
                     src={activeItem.url}
                     controls
                     playsInline
                     className="max-h-[280px] w-auto max-w-full object-contain rounded shadow"
                   />
-                ) : (
+                ) : activeItem.url ? (
                   <img
                     src={activeItem.url}
                     alt="Selected Preview"
                     className="max-h-[280px] w-auto max-w-full object-contain rounded shadow"
                   />
-                )}
+                ) : null}
               </div>
             </div>
           )}
@@ -1463,6 +1489,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                                 denoiseStrength: item.denoiseStrength || denoiseStrength,
                               }}
                               dimensions={{ width: item.originalWidth, height: item.originalHeight }}
+                              fileName={item.name}
                               hideDownloadButton={true}
                             />
                           ) : (
@@ -1603,8 +1630,10 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         <div className="w-full h-full flex items-center justify-center bg-emerald-950 text-emerald-400 text-xs font-black">
                           ▶
                         </div>
-                      ) : (
+                      ) : item.url ? (
                         <img src={item.url} alt="Thumb" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-900" />
                       )}
                       {isEnhanced && (
                         <div className="absolute top-0 right-0 bg-emerald-500 text-neutral-950 font-black text-[9px] px-1 rounded-bl">

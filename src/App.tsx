@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { ImageEnhancerStudio } from './components/ImageEnhancerStudio';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
-import { ShieldCheck, Lock, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, Lock } from 'lucide-react';
 
 export default function App() {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);

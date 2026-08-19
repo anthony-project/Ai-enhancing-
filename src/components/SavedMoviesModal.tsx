@@ -54,12 +54,18 @@ export const SavedMoviesModal: React.FC<SavedMoviesModalProps> = ({
                   className="group bg-neutral-950 border border-neutral-800 hover:border-amber-500/40 rounded-xl overflow-hidden flex flex-col justify-between transition-all"
                 >
                   <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
-                    <img
-                      src={movie.scenes[0]?.imageUrl || movie.posterUrl}
-                      alt={movie.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    {(movie.scenes[0]?.imageUrl || movie.posterUrl) ? (
+                      <img
+                        src={movie.scenes[0]?.imageUrl || movie.posterUrl}
+                        alt={movie.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-neutral-900 text-neutral-600 text-xs">
+                        No Preview
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent" />
                     
                     <span className="absolute top-2.5 left-2.5 bg-neutral-950/80 text-amber-400 font-bold text-[10px] px-2 py-0.5 rounded border border-amber-500/20">

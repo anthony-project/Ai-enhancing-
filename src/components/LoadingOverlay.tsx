@@ -7,7 +7,7 @@ interface LoadingOverlayProps {
 }
 
 const STAGES = [
-  'Analyzing prompt & reference image with Gemini AI...',
+  'Analyzing prompt & reference image with Neural AI...',
   'Generating video story flow & camera movements...',
   'Synthesizing HD male/female narration script...',
   'Enhancing 4K frame interpolation & 60 FPS motion...',

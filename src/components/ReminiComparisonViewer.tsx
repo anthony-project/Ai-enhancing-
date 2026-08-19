@@ -390,13 +390,15 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
               className="relative w-full h-full transition-transform duration-100 flex items-center justify-center pointer-events-none"
             >
               {/* Background Layer: Enhanced (After) Image */}
-              <img
-                src={enhancedImage}
-                alt="8K Enhanced After"
-                referrerPolicy="no-referrer"
-                className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
-                draggable={false}
-              />
+              {enhancedImage ? (
+                <img
+                  src={enhancedImage}
+                  alt="8K Enhanced After"
+                  referrerPolicy="no-referrer"
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                  draggable={false}
+                />
+              ) : null}
 
               {/* Foreground Layer: Original (Before) Image with clip path */}
               <div
@@ -407,13 +409,15 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
                 }}
                 className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none"
               >
-                <img
-                  src={originalImage}
-                  alt="Original Low-Res Before"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain filter contrast-90 brightness-95 pointer-events-none select-none"
-                  draggable={false}
-                />
+                {originalImage ? (
+                  <img
+                    src={originalImage}
+                    alt="Original Low-Res Before"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain filter contrast-90 brightness-95 pointer-events-none select-none"
+                    draggable={false}
+                  />
+                ) : null}
               </div>
 
               {/* Draggable Split Line & Handle with Clear Sliding Arrows */}
@@ -463,25 +467,29 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
               <span className="absolute top-2 left-2 bg-neutral-950/80 text-neutral-400 text-[10px] font-mono px-2 py-0.5 rounded border border-neutral-700 z-10">
                 Original
               </span>
-              <img
-                src={originalImage}
-                alt="Before"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-contain filter contrast-90 brightness-95"
-                draggable={false}
-              />
+              {originalImage ? (
+                <img
+                  src={originalImage}
+                  alt="Before"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain filter contrast-90 brightness-95"
+                  draggable={false}
+                />
+              ) : null}
             </div>
             <div className="relative w-full h-full bg-neutral-900 rounded-xl overflow-hidden border border-amber-500/40 flex items-center justify-center">
               <span className="absolute top-2 right-2 bg-amber-400 text-neutral-950 text-[10px] font-bold font-mono px-2 py-0.5 rounded shadow z-10">
                 8K Ultra HD
               </span>
-              <img
-                src={enhancedImage}
-                alt="After"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-contain"
-                draggable={false}
-              />
+              {enhancedImage ? (
+                <img
+                  src={enhancedImage}
+                  alt="After"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain"
+                  draggable={false}
+                />
+              ) : null}
             </div>
           </div>
         )}
@@ -494,13 +502,15 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
             }}
             className="w-full h-full flex items-center justify-center p-2 transition-transform duration-100"
           >
-            <img
-              src={enhancedImage}
-              alt="8K Enhanced Result"
-              referrerPolicy="no-referrer"
-              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-              draggable={false}
-            />
+            {enhancedImage ? (
+              <img
+                src={enhancedImage}
+                alt="8K Enhanced Result"
+                referrerPolicy="no-referrer"
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                draggable={false}
+              />
+            ) : null}
           </div>
         )}
 

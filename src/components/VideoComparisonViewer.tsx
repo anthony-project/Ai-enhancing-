@@ -27,6 +27,7 @@ interface VideoComparisonViewerProps {
   options: VideoEnhanceOptions;
   dimensions?: { width: number; height: number };
   duration?: number;
+  fileName?: string;
   onExtractFrame?: (frameDataUrl: string) => void;
   hideDownloadButton?: boolean;
 }
@@ -36,6 +37,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
   options,
   dimensions,
   duration,
+  fileName,
   onExtractFrame,
   hideDownloadButton = true,
 }) => {
@@ -184,7 +186,8 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
       const { blob, filename } = await exportEnhancedVideo(
         videoSrc,
         options,
-        (p) => setExportProgress(p)
+        (p) => setExportProgress(p),
+        fileName ? `Enhanced_${fileName}` : undefined
       );
 
       setExportProgress(100);
@@ -335,7 +338,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
         className="relative w-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] max-h-[82vh] bg-black rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl flex items-center justify-center select-none"
       >
         {/* ================= VIEW MODE 1: SPLIT SLIDER (HARDWARE ACCELERATED GPU COMPOSITION) ================= */}
-        {viewMode === 'split' && (
+        {viewMode === 'split' && Boolean(videoSrc) && (
           <div className="relative w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center overflow-hidden">
             {/* Original Video (Left side of slider) */}
             <video
@@ -415,7 +418,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
         )}
 
         {/* ================= VIEW MODE 2: EXTRA LARGE SIDE BY SIDE ================= */}
-        {viewMode === 'sideBySide' && (
+        {viewMode === 'sideBySide' && Boolean(videoSrc) && (
           <div className="w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] grid grid-cols-1 md:grid-cols-2 gap-2 p-2 bg-neutral-950">
             {/* Left Box: Original */}
             <div className="relative w-full h-full min-h-[260px] md:min-h-[540px] rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center bg-black shadow-inner">
@@ -456,7 +459,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
         )}
 
         {/* ================= VIEW MODE 3: FULL ENHANCED 8K VIEW ================= */}
-        {viewMode === 'enhancedOnly' && (
+        {viewMode === 'enhancedOnly' && Boolean(videoSrc) && (
           <div className="relative w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center bg-black">
             <video
               ref={masterVideoRef}
