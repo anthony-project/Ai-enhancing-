@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { ImageEnhancerStudio } from './components/ImageEnhancerStudio';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { TermsConditionsModal } from './components/TermsConditionsModal';
+import { ShieldCheck, Lock, FileText } from 'lucide-react';
 
 export default function App() {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState<boolean>(false);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 flex justify-center selection:bg-amber-500 selection:text-black overflow-x-hidden w-full">
@@ -22,24 +24,34 @@ export default function App() {
           <ImageEnhancerStudio onOpenPrivacy={() => setIsPrivacyModalOpen(true)} />
         </main>
 
-        {/* Clickable Privacy Policy Heading Line & Security Footer */}
+        {/* Clickable Privacy Policy & Terms and Conditions Bottom Footer */}
         <footer className="mt-8 border-t border-neutral-900/80 pt-5 pb-6 px-4 text-center space-y-3">
-          {/* Dedicated Clickable Privacy Policy Heading Line */}
-          <div 
-            onClick={() => setIsPrivacyModalOpen(true)}
-            className="group inline-flex items-center justify-center gap-2 px-4 py-2 bg-neutral-900/90 hover:bg-neutral-850 border border-neutral-800 hover:border-emerald-500/40 rounded-full cursor-pointer transition-all shadow-sm active:scale-95 mx-auto"
-            title="Click to view full Privacy Policy & Data Security Guidelines"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-bold text-neutral-200 group-hover:text-white transition-colors">
-              Privacy Policy: 100% On-Device & Zero Data Storage
-            </span>
-            <span className="text-[10px] text-emerald-400 underline font-medium ml-1">
-              Read Guidelines
-            </span>
+          {/* Dedicated Clickable Action Links */}
+          <div className="flex flex-wrap items-center justify-center gap-2 max-w-md mx-auto">
+            {/* Privacy Policy Button */}
+            <button 
+              type="button"
+              onClick={() => setIsPrivacyModalOpen(true)}
+              className="group inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-neutral-900/90 hover:bg-neutral-850 border border-neutral-800 hover:border-emerald-500/40 rounded-full cursor-pointer transition-all shadow-sm active:scale-95 text-xs font-bold text-neutral-200 hover:text-white"
+              title="Click to view Privacy Policy & Data Security"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span>Privacy Policy</span>
+            </button>
+
+            {/* Terms & Conditions Button */}
+            <button 
+              type="button"
+              onClick={() => setIsTermsModalOpen(true)}
+              className="group inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-neutral-900/90 hover:bg-neutral-850 border border-neutral-800 hover:border-amber-500/40 rounded-full cursor-pointer transition-all shadow-sm active:scale-95 text-xs font-bold text-neutral-200 hover:text-white"
+              title="Click to view Terms & Conditions"
+            >
+              <FileText className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span>Terms & Conditions</span>
+            </button>
           </div>
 
-          <div className="flex items-center justify-center gap-4 text-[10px] text-neutral-500">
+          <div className="flex items-center justify-center gap-3 text-[10px] text-neutral-500">
             <span className="flex items-center gap-1">
               <Lock className="w-3 h-3 text-emerald-400" />
               <span>TLS 1.3 256-Bit</span>
@@ -47,10 +59,10 @@ export default function App() {
             <span>•</span>
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Sandbox Isolation</span>
+              <span>Zero Retention</span>
             </span>
             <span>•</span>
-            <span>Zero Server Logging</span>
+            <span>ai-enhancing.vercel.app</span>
           </div>
 
           <p className="text-[11px] text-neutral-500">
@@ -63,6 +75,12 @@ export default function App() {
       <PrivacyPolicyModal 
         isOpen={isPrivacyModalOpen} 
         onClose={() => setIsPrivacyModalOpen(false)} 
+      />
+
+      {/* Terms and Conditions Modal */}
+      <TermsConditionsModal 
+        isOpen={isTermsModalOpen} 
+        onClose={() => setIsTermsModalOpen(false)} 
       />
     </div>
   );
