@@ -122,22 +122,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
       fileInputRef.current.value = '';
     }
 
-    try {
-      sessionStorage.clear();
-      for (const key of Object.keys(localStorage)) {
-        if (
-          key.includes('image') ||
-          key.includes('photo') ||
-          key.includes('video') ||
-          key.includes('enhance') ||
-          key.includes('remini')
-        ) {
-          localStorage.removeItem(key);
-        }
-      }
-    } catch {
-      // Storage safety
-    }
+    MemoryScrubber.purgeAll();
   }, []);
 
   // Cleanup listeners on tab close / back navigation
