@@ -17,6 +17,10 @@ app.disable('x-powered-by');
 // Security & Zero-Data Retention Privacy Headers Middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   // Advanced Security Headers
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: https:; media-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; frame-ancestors 'self';"
+  );
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
