@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface HeaderProps {
   onReset?: () => void;
@@ -65,39 +66,44 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
   return (
     <header
       id="app-header"
-      className="sticky top-0 z-40 bg-neutral-950/95 backdrop-blur-md border-b border-neutral-850 px-2.5 sm:px-4 py-2 transition-all w-full select-none"
+      className="sticky top-0 z-40 bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-850/80 px-3 sm:px-4 py-2.5 transition-all w-full select-none"
     >
       <div className="flex items-center justify-between gap-2 max-w-7xl mx-auto">
         {/* Left: Logo & Brand */}
-        <div
+        <motion.div
           onClick={onReset}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
           className="flex items-center gap-2.5 cursor-pointer group select-none min-w-0"
           title="Enhance Your Photo"
         >
           <div
             id="logo-icon"
-            className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-neutral-900 border border-neutral-750 shadow-md overflow-hidden shrink-0 group-hover:border-amber-400/60 transition-all p-0.5"
+            className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-neutral-900 border border-neutral-750/80 shadow-[0_0_20px_rgba(245,158,11,0.15)] overflow-hidden shrink-0 group-hover:border-amber-400/60 transition-all p-0.5"
           >
             <img
               src="/logo.jpg"
               alt="Logo"
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-xl"
               referrerPolicy="no-referrer"
             />
           </div>
           <div className="min-w-0">
-            <span className="font-bold text-sm sm:text-base tracking-tight text-white font-serif whitespace-nowrap block">
-              Enhance <span className="text-amber-400">Your Photo</span>
+            <span className="font-bold text-sm sm:text-base tracking-tight text-white font-serif whitespace-nowrap flex items-center gap-1.5">
+              <span>Enhance</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 font-black">
+                Your Photo
+              </span>
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Right: Top-Corner Live User & Visit Counter Mini Box */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Live Visitor & Online Stats Mini Box */}
           <div
             id="visitor-stats-minibox"
-            className="flex items-center gap-1.5 sm:gap-3 bg-neutral-900/90 border border-neutral-800 px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-inner text-[10px] sm:text-xs"
+            className="flex items-center gap-1.5 sm:gap-3 bg-neutral-900/80 backdrop-blur-md border border-neutral-800/80 px-2.5 sm:px-3.5 py-1.5 rounded-2xl shadow-inner text-[10px] sm:text-xs"
           >
             {/* Online / Active Users Counting */}
             <div
@@ -130,3 +136,4 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
     </header>
   );
 };
+

@@ -50,6 +50,10 @@ import { extractVideoMetadata, exportEnhancedVideo, VideoMetadata } from '../uti
 import { validateMediaFile, sanitizeFileName, MemoryScrubber } from '../utils/securityGuard';
 import { ReminiComparisonViewer } from './ReminiComparisonViewer';
 import { VideoComparisonViewer } from './VideoComparisonViewer';
+import { BorderBeam } from './ui/BorderBeam';
+import { SpotlightCard } from './ui/Spotlight';
+import { ShimmerButton } from './ui/ShimmerButton';
+import { motion, AnimatePresence } from 'motion/react';
 
 export interface BatchMediaItem {
   id: string;
@@ -1011,44 +1015,60 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
 
       {/* ===================== MAIN STUDIO WORKSPACE ===================== */}
       {queue.length === 0 ? (
-        /* UNIFIED 100+ MULTI-QUEUE UPLOAD DROPZONE */
-        <div
+        /* UNIFIED 100+ MULTI-QUEUE UPLOAD DROPZONE WITH INSPIRA UI SPOTLIGHT & BORDER BEAM */
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-neutral-800 hover:border-amber-400/80 bg-neutral-900/40 hover:bg-neutral-900/70 rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-all duration-200 group shadow-lg"
+          className="cursor-pointer select-none"
         >
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-neutral-800/90 border border-neutral-700 group-hover:border-amber-400/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-inner">
-              <ImageIcon className="w-6 h-6 text-amber-400" />
-            </div>
-            <div className="w-7 h-7 rounded-full bg-neutral-850 flex items-center justify-center text-xs font-black text-neutral-300 border border-neutral-750">
-              +
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-neutral-800/90 border border-neutral-700 group-hover:border-amber-400/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-inner">
-              <Film className="w-6 h-6 text-emerald-400" />
-            </div>
-          </div>
+          <SpotlightCard
+            spotlightColor="rgba(245, 158, 11, 0.18)"
+            className="border-2 border-dashed border-neutral-800 hover:border-amber-400/80 bg-neutral-900/60 hover:bg-neutral-900/80 rounded-3xl p-6 sm:p-10 text-center transition-all duration-300 group shadow-2xl relative"
+          >
+            <BorderBeam size={220} duration={9} colorFrom="#f59e0b" colorTo="#10b981" />
 
-          <h2 className="text-base sm:text-xl font-black text-neutral-100 group-hover:text-amber-300 transition-colors">
-            Upload Photos or Videos to Enhance in 8K UHD
-          </h2>
-          <p className="text-xs text-neutral-300 mt-1.5 max-w-md mx-auto font-medium">
-            Select one or multiple files at once. Choose your 8K effects, click enhance, and download your crystal clear media.
-          </p>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <motion.div 
+                whileHover={{ scale: 1.1, rotate: -3 }}
+                className="w-12 h-12 rounded-2xl bg-neutral-850/90 border border-neutral-700/80 group-hover:border-amber-400/60 flex items-center justify-center transition-transform shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+              >
+                <ImageIcon className="w-6 h-6 text-amber-400" />
+              </motion.div>
+              <div className="w-7 h-7 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-black text-neutral-300 border border-neutral-700">
+                +
+              </div>
+              <motion.div 
+                whileHover={{ scale: 1.1, rotate: 3 }}
+                className="w-12 h-12 rounded-2xl bg-neutral-850/90 border border-neutral-700/80 group-hover:border-emerald-400/60 flex items-center justify-center transition-transform shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+              >
+                <Film className="w-6 h-6 text-emerald-400" />
+              </motion.div>
+            </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-4 text-[11px] font-bold text-neutral-200">
-            <span className="flex items-center gap-1 bg-neutral-800/90 px-2.5 py-1 rounded-full border border-neutral-700">
-              📸 8K Sub-Pixel Laplacian Acuity
-            </span>
-            <span className="flex items-center gap-1 bg-neutral-800/90 px-2.5 py-1 rounded-full border border-neutral-700">
-              💎 Iris & Catchlight Recovery
-            </span>
-            <span className="flex items-center gap-1 bg-neutral-800/90 px-2.5 py-1 rounded-full border border-neutral-700">
-              ⚡ Multi-Queue (100+ Files)
-            </span>
-          </div>
-        </div>
+            <h2 className="text-base sm:text-xl font-black text-neutral-100 group-hover:text-amber-300 transition-colors">
+              Upload Photos or Videos to Enhance in 8K UHD
+            </h2>
+            <p className="text-xs text-neutral-300 mt-1.5 max-w-md mx-auto font-medium leading-relaxed">
+              Select one or multiple files at once. Choose your 8K effects, click enhance, and download your crystal clear media.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-4 text-[11px] font-bold text-neutral-200">
+              <span className="flex items-center gap-1 bg-neutral-800/80 px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
+                📸 8K Sub-Pixel Laplacian Acuity
+              </span>
+              <span className="flex items-center gap-1 bg-neutral-800/80 px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
+                💎 Iris & Catchlight Recovery
+              </span>
+              <span className="flex items-center gap-1 bg-neutral-800/80 px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
+                ⚡ Multi-Queue (100+ Files)
+              </span>
+            </div>
+          </SpotlightCard>
+        </motion.div>
       ) : (
         /* WORKSPACE: TOP (SELECTED IMAGE) -> MIDDLE (EFFECTS) -> START BUTTON -> RESULT BOX -> BOTTOM (MULTI-QUEUE) */
         <div className="space-y-4 animate-fadeIn">
@@ -1194,26 +1214,29 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
             )}
 
             {/* ================= COMPACT EFFECT CARDS (BOLD TYPOGRAPHY & VISIBLE EMOJI) ================= */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {presetList.map((preset) => {
                 const isSelected = globalModes.includes(preset.id);
                 const isThisEnhancing = isBatchProcessing && globalModes.includes(preset.id);
                 const Icon = preset.icon;
 
                 return (
-                  <div
+                  <motion.div
                     key={preset.id}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 25 }}
                     onClick={() => {
                       if (!isBatchProcessing) {
                         handleToggleMode(preset.id);
                       }
                     }}
-                    className={`p-2.5 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
+                    className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
                       isThisEnhancing
-                        ? 'bg-amber-400/15 border-amber-400 text-white ring-1 ring-amber-400/50 shadow-md'
+                        ? 'bg-amber-400/15 border-amber-400 text-white ring-2 ring-amber-400/50 shadow-[0_0_20px_rgba(245,158,11,0.25)]'
                         : isSelected
-                        ? 'bg-neutral-800/95 border-amber-400 text-white shadow-sm ring-1 ring-amber-400/40'
-                        : 'bg-neutral-950/80 border-neutral-800 text-neutral-200 hover:bg-neutral-850 hover:border-neutral-700'
+                        ? 'bg-neutral-850/95 border-amber-400 text-white shadow-md ring-1 ring-amber-400/40'
+                        : 'bg-neutral-950/80 border-neutral-800 text-neutral-200 hover:bg-neutral-850/90 hover:border-neutral-700'
                     }`}
                   >
                     <div>
@@ -1221,7 +1244,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                       <div className="flex items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5 text-left flex-1 min-w-0">
                           <span
-                            className={`p-0.5 rounded transition-colors shrink-0 ${
+                            className={`p-0.5 rounded-lg transition-colors shrink-0 ${
                               isSelected
                                 ? 'bg-amber-400 text-neutral-950 font-black'
                                 : 'bg-neutral-800 text-neutral-400'
@@ -1237,9 +1260,9 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         </div>
 
                         <span
-                          className={`text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0 tracking-wider ${
+                          className={`text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 tracking-wider ${
                             isSelected
-                              ? 'bg-amber-400 text-neutral-950 font-black'
+                              ? 'bg-amber-400 text-neutral-950 font-black shadow-sm'
                               : 'bg-neutral-800 text-neutral-300 font-bold border border-neutral-700'
                           }`}
                         >
@@ -1254,7 +1277,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                     </div>
 
                     {/* Quick 1-Click Apply Button */}
-                    <div className="pt-1.5 mt-1.5 border-t border-neutral-800/80 flex items-center justify-between gap-1">
+                    <div className="pt-1.5 mt-2 border-t border-neutral-800/80 flex items-center justify-between gap-1">
                       <button
                         type="button"
                         disabled={isBatchProcessing}
@@ -1266,13 +1289,13 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                           }
                           handleEnhanceActiveItem(preset.id);
                         }}
-                        className="w-full py-1 px-2 rounded-lg bg-neutral-900 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 text-[10px] font-black border border-amber-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:opacity-50 shadow-sm"
+                        className="w-full py-1.5 px-2.5 rounded-xl bg-neutral-900 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 text-[10px] font-black border border-amber-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:opacity-50 shadow-sm"
                       >
                         <Zap className="w-3 h-3 shrink-0" />
                         <span className="font-black">1-Click Apply & Enhance</span>
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -1354,25 +1377,26 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               </div>
             </div>
 
-            {/* ================= 3. ORDER / START ENHANCING BUTTONS ================= */}
+            {/* ================= 3. ORDER / START ENHANCING BUTTONS WITH ANIMATE UI SHIMMER ================= */}
             <div className="space-y-2 pt-1">
               <div className="flex flex-col sm:flex-row gap-2">
-                <button
+                <ShimmerButton
                   type="button"
+                  variant="amber"
                   onClick={() => (queue.length > 1 ? handleEnhanceAllQueue() : handleEnhanceActiveItem())}
                   disabled={isBatchProcessing || !activeItem}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 text-neutral-950 font-black text-xs sm:text-sm rounded-xl transition-all shadow-lg active:scale-[0.99] disabled:opacity-75 cursor-pointer relative overflow-hidden ring-2 ring-amber-400/40"
+                  className="flex-1 text-neutral-950 font-black text-xs sm:text-sm py-4 rounded-2xl cursor-pointer"
                 >
                   {isBatchProcessing ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-4 h-4 text-neutral-950 animate-spin shrink-0" />
                       <span>
                         Applying {globalModes.length > 0 ? `${globalModes.length} Effects` : '8K Enhancement'} & Reconstructing...
                       </span>
                     </div>
                   ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 text-neutral-950 fill-neutral-950" />
+                    <div className="flex items-center justify-center gap-2">
+                      <Sparkles className="w-4 h-4 text-neutral-950 fill-neutral-950 shrink-0" />
                       <span>
                         {queue.length > 1
                           ? `🚀 Order & Start Enhancing All (${queue.length} Media Items)`
@@ -1384,20 +1408,22 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                           ? `🚀 Order & Start Enhancing Image (${globalModes.length} Effect${globalModes.length > 1 ? 's' : ''})`
                           : '🚀 Order & Start Enhancing Image'}
                       </span>
-                    </>
+                    </div>
                   )}
-                </button>
+                </ShimmerButton>
 
                 {queue.length > 1 && (
-                  <button
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={handleEnhanceAllQueue}
                     disabled={isBatchProcessing}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-3 bg-neutral-800 hover:bg-neutral-750 text-amber-300 hover:text-amber-200 border border-amber-500/40 rounded-xl font-black text-xs transition-all shadow-sm active:scale-[0.99] disabled:opacity-75 cursor-pointer"
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-3 bg-neutral-850 hover:bg-neutral-800 text-amber-300 hover:text-amber-200 border border-amber-500/40 rounded-2xl font-black text-xs transition-all shadow-sm active:scale-[0.99] disabled:opacity-75 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                     <span>Enhance All ({queue.length})</span>
-                  </button>
+                  </motion.button>
                 )}
               </div>
 
@@ -1760,11 +1786,12 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
 
           {/* ================= 6. DEDICATED SINGLE GREEN MASTER DOWNLOAD BUTTON AT THE BOTTOM ================= */}
           <div className="sticky bottom-3 z-40 mt-6 max-w-4xl mx-auto w-full px-1">
-            <div className="bg-neutral-900/95 backdrop-blur-xl border-2 border-emerald-500/80 p-3 sm:p-4 rounded-2xl shadow-2xl space-y-2 ring-4 ring-emerald-500/20">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="bg-neutral-900/95 backdrop-blur-xl border-2 border-emerald-500/80 p-3 sm:p-4 rounded-3xl shadow-2xl space-y-2 ring-4 ring-emerald-500/20 relative overflow-hidden">
+              <BorderBeam size={180} duration={8} colorFrom="#10b981" colorTo="#06b6d4" />
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 relative z-10">
                 {/* Information text & count */}
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shrink-0">
                     <Download className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <div className="min-w-0">
@@ -1794,27 +1821,28 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                   </div>
                 </div>
 
-                {/* The Single Master Green Download Button */}
-                <button
+                {/* The Single Master Green Download Button with ShimmerButton */}
+                <ShimmerButton
                   type="button"
+                  variant="emerald"
                   onClick={handleUnifiedMasterAction}
                   disabled={isUnifiedDownloading || isBatchProcessing || queue.length === 0}
-                  className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50 ring-2 ring-emerald-400/50 hover:shadow-emerald-500/30 shrink-0"
+                  className="w-full sm:w-auto px-7 py-3.5 text-white font-black text-xs sm:text-sm rounded-2xl shadow-xl transition-all cursor-pointer"
                 >
                   {isUnifiedDownloading ? (
-                    <>
+                    <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-4 h-4 text-white animate-spin shrink-0" />
                       <span>{unifiedStatusText || `Processing (${unifiedProgress}%)...`}</span>
-                    </>
+                    </div>
                   ) : unifiedSuccess ? (
-                    <>
+                    <div className="flex items-center justify-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-white stroke-[3] shrink-0" />
                       <span>
                         {queue.length === 1 ? 'Downloaded Successfully!' : `Downloaded All ${queue.length} Files!`}
                       </span>
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex items-center justify-center gap-2">
                       <Download className="w-4 h-4 text-white stroke-[2.5] shrink-0" />
                       <span>
                         {queue.length === 0
@@ -1825,9 +1853,9 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                               ? `Download All ${queue.length} Enhanced Files`
                               : `Enhance & Download All (${queue.length} Items)`)}
                       </span>
-                    </>
+                    </div>
                   )}
-                </button>
+                </ShimmerButton>
               </div>
 
               {/* Live Progress Bar for Unified Action */}
