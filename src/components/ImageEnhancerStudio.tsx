@@ -47,7 +47,7 @@ import {
   downloadEnhancedImage,
 } from '../utils/reminiEnhancer';
 import { extractVideoMetadata, exportEnhancedVideo, VideoMetadata } from '../utils/videoEnhancer';
-import { validateMediaFile, sanitizeFileName, MemoryScrubber } from '../utils/securityGuard';
+import { validateMediaFile, sanitizeFileName, MemoryScrubber, dataUrlToBlobUrl } from '../utils/securityGuard';
 import { ReminiComparisonViewer } from './ReminiComparisonViewer';
 import { VideoComparisonViewer } from './VideoComparisonViewer';
 
@@ -312,17 +312,18 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
 
       const reader = new FileReader();
       reader.onload = async (event) => {
-        const dataUrl = event.target?.result as string;
+        const rawUrl = event.target?.result as string;
+        const blobUrl = dataUrlToBlobUrl(rawUrl);
         const itemId = `media_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 5)}`;
 
         if (isVideo) {
           try {
-            const meta = await extractVideoMetadata(dataUrl, file.size);
+            const meta = await extractVideoMetadata(blobUrl, file.size);
             const newItem: BatchMediaItem = {
               id: itemId,
               name: cleanFileName,
               type: 'video',
-              url: dataUrl,
+              url: blobUrl,
               originalWidth: meta.width,
               originalHeight: meta.height,
               enhancedUrl: null,
@@ -343,7 +344,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               id: itemId,
               name: cleanFileName,
               type: 'video',
-              url: dataUrl,
+              url: blobUrl,
               originalWidth: 1920,
               originalHeight: 1080,
               enhancedUrl: null,
@@ -367,7 +368,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               id: itemId,
               name: cleanFileName,
               type: 'image',
-              url: dataUrl,
+              url: blobUrl,
               originalWidth: img.naturalWidth || img.width || 800,
               originalHeight: img.naturalHeight || img.height || 600,
               enhancedUrl: null,
@@ -384,7 +385,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
             setQueue((prev) => [...prev, newItem]);
             setActiveItemId((prev) => prev || itemId);
           };
-          img.src = dataUrl;
+          img.src = blobUrl;
         }
       };
       reader.readAsDataURL(file);
@@ -440,6 +441,8 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
         finalW = item.originalWidth;
         finalH = item.originalHeight;
       }
+
+      finalUrl = dataUrlToBlobUrl(finalUrl);
 
       return {
         ...item,
