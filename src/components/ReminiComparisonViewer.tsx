@@ -420,21 +420,21 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
                 ) : null}
               </div>
 
-              {/* Draggable Split Line & Handle with Clear Sliding Arrows */}
+              {/* Draggable Split Line & Handle with Clear Sliding Arrows & 3D Distorted Glass Knob */}
               {!isHoldingOriginal && (
                 <div
                   style={{ left: `${sliderPosition}%` }}
-                  className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_15px_rgba(255,255,255,0.9)] pointer-events-none flex items-center justify-center z-20"
+                  className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-amber-400 via-white to-emerald-400 shadow-[0_0_18px_rgba(255,255,255,0.9)] pointer-events-none flex items-center justify-center z-20"
                 >
                   <div
-                    className={`w-10 h-10 -ml-5 rounded-full bg-gradient-to-br from-white to-neutral-200 text-neutral-950 shadow-2xl border-2 border-neutral-900 flex items-center justify-center pointer-events-auto cursor-ew-resize select-none transition-transform ${
-                      isDragging ? 'scale-110 ring-4 ring-amber-400/50' : 'hover:scale-105'
+                    className={`w-11 h-11 -ml-[22px] rounded-full bg-neutral-900/90 backdrop-blur-xl text-white shadow-[0_0_25px_rgba(245,158,11,0.35),inset_0_1px_2px_rgba(255,255,255,0.4)] border-2 border-amber-400/90 flex items-center justify-center pointer-events-auto cursor-ew-resize select-none transition-all ${
+                      isDragging ? 'scale-115 ring-4 ring-amber-400/50 shadow-[0_0_35px_rgba(245,158,11,0.6)]' : 'hover:scale-110'
                     }`}
                     style={{ touchAction: 'none' }}
                   >
-                    <div className="flex items-center text-neutral-900 justify-center">
-                      <ChevronLeft className="w-3.5 h-3.5 -mr-1" />
-                      <ChevronRight className="w-3.5 h-3.5 -ml-1" />
+                    <div className="flex items-center text-amber-300 justify-center">
+                      <ChevronLeft className="w-4 h-4 -mr-1 stroke-[2.5]" />
+                      <ChevronRight className="w-4 h-4 -ml-1 stroke-[2.5]" />
                     </div>
                   </div>
                 </div>

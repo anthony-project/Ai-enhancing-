@@ -53,6 +53,7 @@ import { VideoComparisonViewer } from './VideoComparisonViewer';
 import { BorderBeam } from './ui/BorderBeam';
 import { SpotlightCard } from './ui/Spotlight';
 import { ShimmerButton } from './ui/ShimmerButton';
+import { DistortedGlassCard } from './ui/DistortedGlassCard';
 import { motion, AnimatePresence } from 'motion/react';
 
 export interface BatchMediaItem {
@@ -1015,7 +1016,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
 
       {/* ===================== MAIN STUDIO WORKSPACE ===================== */}
       {queue.length === 0 ? (
-        /* UNIFIED 100+ MULTI-QUEUE UPLOAD DROPZONE WITH INSPIRA UI SPOTLIGHT & BORDER BEAM */
+        /* UNIFIED 100+ MULTI-QUEUE UPLOAD DROPZONE WITH OLIVIER LAROSE 3D DISTORTED GLASS EFFECT */
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1023,69 +1024,75 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="cursor-pointer select-none"
+          className="cursor-pointer select-none w-full"
         >
-          <SpotlightCard
-            spotlightColor="rgba(245, 158, 11, 0.18)"
-            className="border-2 border-dashed border-neutral-800 hover:border-amber-400/80 bg-neutral-900/60 hover:bg-neutral-900/80 rounded-3xl p-6 sm:p-10 text-center transition-all duration-300 group shadow-2xl relative"
+          <DistortedGlassCard
+            tiltIntensity={8}
+            glassDistortion={true}
+            chromaticEdge={true}
+            className="border-2 border-dashed border-neutral-750/70 hover:border-amber-400/80 bg-neutral-900/50 hover:bg-neutral-900/70 p-6 sm:p-10 text-center transition-all duration-300 group shadow-2xl relative overflow-hidden"
           >
-            <BorderBeam size={220} duration={9} colorFrom="#f59e0b" colorTo="#10b981" />
+            {/* Thick Glowing Running Border Beam */}
+            <BorderBeam size={240} duration={6} borderWidth={3.5} colorFrom="#f59e0b" colorTo="#10b981" glow={true} />
 
-            <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="flex items-center justify-center gap-3 mb-3 relative z-10">
               <motion.div 
-                whileHover={{ scale: 1.1, rotate: -3 }}
-                className="w-12 h-12 rounded-2xl bg-neutral-850/90 border border-neutral-700/80 group-hover:border-amber-400/60 flex items-center justify-center transition-transform shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+                whileHover={{ scale: 1.12, rotate: -4 }}
+                className="w-12 h-12 rounded-2xl bg-neutral-850/90 border border-neutral-700/80 group-hover:border-amber-400/60 flex items-center justify-center transition-transform shadow-[0_0_18px_rgba(245,158,11,0.2)]"
               >
                 <ImageIcon className="w-6 h-6 text-amber-400" />
               </motion.div>
-              <div className="w-7 h-7 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-black text-neutral-300 border border-neutral-700">
+              <div className="w-7 h-7 rounded-full bg-neutral-800/90 flex items-center justify-center text-xs font-black text-neutral-300 border border-neutral-700">
                 +
               </div>
               <motion.div 
-                whileHover={{ scale: 1.1, rotate: 3 }}
-                className="w-12 h-12 rounded-2xl bg-neutral-850/90 border border-neutral-700/80 group-hover:border-emerald-400/60 flex items-center justify-center transition-transform shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+                whileHover={{ scale: 1.12, rotate: 4 }}
+                className="w-12 h-12 rounded-2xl bg-neutral-850/90 border border-neutral-700/80 group-hover:border-emerald-400/60 flex items-center justify-center transition-transform shadow-[0_0_18px_rgba(16,185,129,0.2)]"
               >
                 <Film className="w-6 h-6 text-emerald-400" />
               </motion.div>
             </div>
 
-            <h2 className="text-base sm:text-xl font-black text-neutral-100 group-hover:text-amber-300 transition-colors">
+            <h2 className="text-base sm:text-xl font-black text-neutral-100 group-hover:text-amber-300 transition-colors relative z-10">
               Upload Photos or Videos to Enhance in 8K UHD
             </h2>
-            <p className="text-xs text-neutral-300 mt-1.5 max-w-md mx-auto font-medium leading-relaxed">
+            <p className="text-xs text-neutral-300 mt-1.5 max-w-md mx-auto font-medium leading-relaxed relative z-10">
               Select one or multiple files at once. Choose your 8K effects, click enhance, and download your crystal clear media.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-4 text-[11px] font-bold text-neutral-200">
-              <span className="flex items-center gap-1 bg-neutral-800/80 px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-4 text-[11px] font-bold text-neutral-200 relative z-10">
+              <span className="flex items-center gap-1 bg-neutral-800/90 backdrop-blur-md px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
                 📸 8K Sub-Pixel Laplacian Acuity
               </span>
-              <span className="flex items-center gap-1 bg-neutral-800/80 px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
+              <span className="flex items-center gap-1 bg-neutral-800/90 backdrop-blur-md px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
                 💎 Iris & Catchlight Recovery
               </span>
-              <span className="flex items-center gap-1 bg-neutral-800/80 px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
+              <span className="flex items-center gap-1 bg-neutral-800/90 backdrop-blur-md px-3 py-1 rounded-full border border-neutral-700/80 shadow-sm">
                 ⚡ Multi-Queue (100+ Files)
               </span>
             </div>
-          </SpotlightCard>
+          </DistortedGlassCard>
         </motion.div>
       ) : (
         /* WORKSPACE: TOP (SELECTED IMAGE) -> MIDDLE (EFFECTS) -> START BUTTON -> RESULT BOX -> BOTTOM (MULTI-QUEUE) */
         <div className="space-y-4 animate-fadeIn">
           {/* ================= 1. TOP: CURRENTLY SELECTED IMAGE PREVIEW ================= */}
           {activeItem && (
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 sm:p-4 space-y-2.5 shadow-md">
+            <div className="bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-3.5 sm:p-5 space-y-3 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] relative overflow-hidden">
+              {/* Thick Glowing Running Border Beam on Selected Image Box */}
+              <BorderBeam size={220} duration={6} borderWidth={3.5} colorFrom="#f59e0b" colorTo="#10b981" glow={true} />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-amber-400/5 via-transparent to-emerald-400/5" />
               {/* Header Info of Selected Item */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800/80 pb-2.5 relative z-10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black text-xs shadow-inner">
                     📷
                   </div>
                   <div>
                     <h3 className="font-black text-xs sm:text-sm text-white flex items-center gap-2">
                       <span className="truncate max-w-[200px] sm:max-w-md">{activeItem.name}</span>
                       <span
-                        className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+                        className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                           activeItem.type === 'video'
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                             : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
@@ -1101,34 +1108,37 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-emerald-400 font-mono font-black text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  <span className="text-emerald-400 font-mono font-black text-[10px] bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/30">
                     {activeItem.originalWidth} × {activeItem.originalHeight} px
                   </span>
-                  <button
+                  <ShimmerButton
                     type="button"
+                    variant="neutral"
+                    showBorderBeam={true}
+                    beamBorderWidth={2.5}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-2 py-0.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 hover:text-white text-[10px] font-bold rounded-lg border border-neutral-700 transition-all flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 text-[10px] font-bold rounded-xl"
                   >
                     <Plus className="w-3 h-3 text-amber-400" />
                     <span>Upload New</span>
-                  </button>
+                  </ShimmerButton>
                 </div>
               </div>
 
               {/* Selected Media Display Frame */}
-              <div className="relative w-full max-h-[300px] flex items-center justify-center overflow-hidden rounded-lg bg-neutral-950 border border-neutral-800 p-2">
+              <div className="relative w-full max-h-[300px] flex items-center justify-center overflow-hidden rounded-2xl bg-neutral-950/90 border border-neutral-800/80 p-2 shadow-inner relative z-10">
                 {activeItem.type === 'video' && activeItem.url ? (
                   <video
                     src={activeItem.url}
                     controls
                     playsInline
-                    className="max-h-[280px] w-auto max-w-full object-contain rounded shadow"
+                    className="max-h-[280px] w-auto max-w-full object-contain rounded-xl shadow-lg"
                   />
                 ) : activeItem.url ? (
                   <img
                     src={activeItem.url}
                     alt="Selected Preview"
-                    className="max-h-[280px] w-auto max-w-full object-contain rounded shadow"
+                    className="max-h-[280px] w-auto max-w-full object-contain rounded-xl shadow-lg"
                   />
                 ) : null}
               </div>
@@ -1136,37 +1146,43 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
           )}
 
           {/* ================= 2. MIDDLE: STEP 1 - SELECT & MARK 8K EFFECTS ================= */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 sm:p-4 space-y-3 shadow-md">
+          <div className="bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-3.5 sm:p-5 space-y-3 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] relative overflow-hidden">
+            {/* Thick Glowing Running Border Beam on Effects Container */}
+            <BorderBeam size={260} duration={8} borderWidth={3.5} colorFrom="#f59e0b" colorTo="#06b6d4" glow={true} />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-400/5 via-transparent to-transparent" />
             {/* Header: Multi-Layer Effect Stacking */}
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-neutral-950/90 p-2.5 rounded-lg border border-neutral-800">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-neutral-950/80 p-3 rounded-2xl border border-neutral-800/80 relative z-10">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-amber-400" />
                 <span className="text-xs font-black text-white uppercase tracking-wider">
                   Step 1: Mark & Select 8K Effects:
                 </span>
                 {globalModes.length > 0 ? (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[11px] font-black border border-amber-400/40 flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[11px] font-black border border-amber-400/40 flex items-center gap-1 shadow-sm">
                     <span>✨</span>
                     <span>{globalModes.length} Marked</span>
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full bg-neutral-850 text-neutral-400 font-mono text-[11px] font-bold border border-neutral-700">
+                  <span className="px-2.5 py-0.5 rounded-full bg-neutral-850 text-neutral-400 font-mono text-[11px] font-bold border border-neutral-700">
                     0 Marked (Click any effect below)
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Reset / Remove Applied & Marked Effects Button */}
-                <button
+                {/* Reset / Remove Applied & Marked Effects Button with Running Glowing Beam */}
+                <ShimmerButton
                   type="button"
+                  variant="neutral"
+                  showBorderBeam={true}
+                  beamBorderWidth={2.5}
                   onClick={handleResetEffects}
-                  className="px-2.5 py-1 bg-neutral-850 hover:bg-rose-950/70 hover:border-rose-500/50 hover:text-rose-300 text-neutral-300 text-[11px] font-black rounded-lg border border-neutral-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                  className="px-3 py-1.5 text-[11px] font-black rounded-xl"
                   title="Remove and reset all marked effects so you can start fresh"
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
                   <span>Reset / Remove Effects</span>
-                </button>
+                </ShimmerButton>
                 <span className="text-[10px] text-neutral-400 font-medium hidden sm:inline">
                   Click boxes to mark & try effects
                 </span>
@@ -1175,7 +1191,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
 
             {/* Active Stacked Effects Tags */}
             {globalModes.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5 px-0.5">
+              <div className="flex flex-wrap items-center gap-1.5 px-0.5 relative z-10">
                 <span className="text-[10px] font-black text-neutral-400">MARKED EFFECTS:</span>
                 {globalModes.map((smId) => {
                   const presetInfo = presetList.find((p) => p.id === smId);
@@ -1183,14 +1199,15 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                   return (
                     <span
                       key={smId}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-800 text-white text-[11px] font-black border border-amber-400/50 shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-neutral-800 text-white text-[11px] font-black border border-amber-400/50 shadow-sm relative overflow-hidden"
                     >
-                      <span className="text-xs">{presetInfo.emoji}</span>
-                      <span>{presetInfo.title}</span>
+                      <BorderBeam size={60} duration={3} borderWidth={2.5} colorFrom="#f59e0b" colorTo="#fef08a" glow={true} />
+                      <span className="text-xs relative z-10">{presetInfo.emoji}</span>
+                      <span className="relative z-10">{presetInfo.title}</span>
                       <button
                         type="button"
                         onClick={() => handleToggleMode(smId)}
-                        className="hover:text-rose-400 ml-0.5 cursor-pointer text-neutral-400 text-xs leading-none font-bold"
+                        className="hover:text-rose-400 ml-0.5 cursor-pointer text-neutral-400 text-xs leading-none font-bold relative z-10"
                         title="Remove this effect"
                       >
                         ×
@@ -1207,15 +1224,15 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 </button>
               </div>
             ) : (
-              <div className="text-[11px] text-neutral-400 px-1 italic flex items-center gap-1.5">
+              <div className="text-[11px] text-neutral-400 px-1 italic flex items-center gap-1.5 relative z-10">
                 <span className="text-amber-400 font-bold">Tip:</span>
                 <span>Select any card or checkbox below to choose your desired 8K effect.</span>
               </div>
             )}
 
-            {/* ================= COMPACT EFFECT CARDS (BOLD TYPOGRAPHY & VISIBLE EMOJI) ================= */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {presetList.map((preset) => {
+            {/* ================= COMPACT EFFECT CARDS (WITH THICK GLOWING RUNNING BORDER BEAMS ON EVERY BOX) ================= */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 relative z-10">
+              {presetList.map((preset, idx) => {
                 const isSelected = globalModes.includes(preset.id);
                 const isThisEnhancing = isBatchProcessing && globalModes.includes(preset.id);
                 const Icon = preset.icon;
@@ -1223,7 +1240,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 return (
                   <motion.div
                     key={preset.id}
-                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileHover={{ scale: 1.025, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ type: 'spring', stiffness: 450, damping: 25 }}
                     onClick={() => {
@@ -1231,15 +1248,26 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         handleToggleMode(preset.id);
                       }
                     }}
-                    className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
+                    className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
                       isThisEnhancing
-                        ? 'bg-amber-400/15 border-amber-400 text-white ring-2 ring-amber-400/50 shadow-[0_0_20px_rgba(245,158,11,0.25)]'
+                        ? 'bg-amber-400/15 border-amber-400 text-white ring-2 ring-amber-400/60 shadow-[0_0_25px_rgba(245,158,11,0.35)]'
                         : isSelected
-                        ? 'bg-neutral-850/95 border-amber-400 text-white shadow-md ring-1 ring-amber-400/40'
-                        : 'bg-neutral-950/80 border-neutral-800 text-neutral-200 hover:bg-neutral-850/90 hover:border-neutral-700'
+                        ? 'bg-neutral-850/95 border-amber-400 text-white shadow-xl ring-2 ring-amber-400/50'
+                        : 'bg-neutral-950/85 border-neutral-800 text-neutral-200 hover:bg-neutral-850/90 hover:border-neutral-700'
                     }`}
                   >
-                    <div>
+                    {/* Continuous Thick Glowing Running Border Beam on every effect box */}
+                    <BorderBeam
+                      size={130}
+                      duration={isSelected ? 4 : 6 + (idx % 3)}
+                      borderWidth={isSelected ? 3.5 : 2.5}
+                      colorFrom={isSelected ? '#fde047' : '#f59e0b'}
+                      colorTo={isSelected ? '#f59e0b' : '#10b981'}
+                      delay={idx * 0.6}
+                      glow={true}
+                    />
+
+                    <div className="relative z-10">
                       {/* Top Row: Checkbox, Emoji, Title, Badge */}
                       <div className="flex items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5 text-left flex-1 min-w-0">
@@ -1276,10 +1304,13 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                       </p>
                     </div>
 
-                    {/* Quick 1-Click Apply Button */}
-                    <div className="pt-1.5 mt-2 border-t border-neutral-800/80 flex items-center justify-between gap-1">
-                      <button
+                    {/* Quick 1-Click Apply Button with Running Glowing Beam */}
+                    <div className="pt-2 mt-2.5 border-t border-neutral-800/80 flex items-center justify-between gap-1 relative z-10">
+                      <ShimmerButton
                         type="button"
+                        variant="amber"
+                        showBorderBeam={true}
+                        beamBorderWidth={2.5}
                         disabled={isBatchProcessing}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1289,20 +1320,21 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                           }
                           handleEnhanceActiveItem(preset.id);
                         }}
-                        className="w-full py-1.5 px-2.5 rounded-xl bg-neutral-900 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 text-[10px] font-black border border-amber-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:opacity-50 shadow-sm"
+                        className="w-full py-2 px-2.5 rounded-xl text-neutral-950 text-[10px] font-black shadow-sm active:scale-95 disabled:opacity-50"
                       >
-                        <Zap className="w-3 h-3 shrink-0" />
+                        <Zap className="w-3.5 h-3.5 shrink-0" />
                         <span className="font-black">1-Click Apply & Enhance</span>
-                      </button>
+                      </ShimmerButton>
                     </div>
                   </motion.div>
                 );
               })}
             </div>
 
-            {/* Fine-Tuning Sliders (Compact) */}
-            <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 space-y-2.5">
-              <div className="flex items-center justify-between">
+            {/* Fine-Tuning Sliders (Compact) with Thick Glowing Running Border Beam */}
+            <div className="p-3.5 bg-neutral-950/90 rounded-2xl border border-neutral-800 space-y-2.5 relative overflow-hidden z-10">
+              <BorderBeam size={180} duration={8} borderWidth={3} colorFrom="#f59e0b" colorTo="#8b5cf6" glow={true} />
+              <div className="flex items-center justify-between relative z-10">
                 <div className="text-xs font-black text-white flex items-center gap-1.5">
                   <Sliders className="w-3.5 h-3.5 text-amber-400" />
                   <span>Fine-Tuning Sliders:</span>
@@ -1310,7 +1342,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 <span className="text-[10px] text-neutral-400 font-semibold">Sub-pixel precision</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 relative z-10">
                 {/* Sharpness */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
@@ -1378,11 +1410,13 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
             </div>
 
             {/* ================= 3. ORDER / START ENHANCING BUTTONS WITH ANIMATE UI SHIMMER ================= */}
-            <div className="space-y-2 pt-1">
+            <div className="space-y-2 pt-1 relative z-10">
               <div className="flex flex-col sm:flex-row gap-2">
                 <ShimmerButton
                   type="button"
                   variant="amber"
+                  showBorderBeam={true}
+                  beamBorderWidth={3.5}
                   onClick={() => (queue.length > 1 ? handleEnhanceAllQueue() : handleEnhanceActiveItem())}
                   disabled={isBatchProcessing || !activeItem}
                   className="flex-1 text-neutral-950 font-black text-xs sm:text-sm py-4 rounded-2xl cursor-pointer"
@@ -1413,24 +1447,26 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 </ShimmerButton>
 
                 {queue.length > 1 && (
-                  <motion.button
+                  <ShimmerButton
                     type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.96 }}
+                    variant="neutral"
+                    showBorderBeam={true}
+                    beamBorderWidth={3}
                     onClick={handleEnhanceAllQueue}
                     disabled={isBatchProcessing}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-3 bg-neutral-850 hover:bg-neutral-800 text-amber-300 hover:text-amber-200 border border-amber-500/40 rounded-2xl font-black text-xs transition-all shadow-sm active:scale-[0.99] disabled:opacity-75 cursor-pointer"
+                    className="px-5 py-3 text-amber-300 font-black text-xs rounded-2xl"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                     <span>Enhance All ({queue.length})</span>
-                  </motion.button>
+                  </ShimmerButton>
                 )}
               </div>
 
               {/* Real-time batch progress bar */}
               {isBatchProcessing && (
-                <div className="bg-neutral-950 p-2.5 rounded-lg border border-amber-400/40 space-y-1.5 animate-fadeIn">
-                  <div className="flex items-center justify-between text-[11px] font-bold">
+                <div className="bg-neutral-950 p-2.5 rounded-xl border border-amber-400/40 space-y-1.5 animate-fadeIn relative overflow-hidden">
+                  <BorderBeam size={100} duration={3} borderWidth={2.5} colorFrom="#f59e0b" colorTo="#fde047" glow={true} />
+                  <div className="flex items-center justify-between text-[11px] font-bold relative z-10">
                     <span className="text-amber-300 flex items-center gap-1.5">
                       <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
                       <span>
@@ -1439,7 +1475,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                     </span>
                     <span className="font-mono text-amber-400 font-black">{batchProgress.percent}%</span>
                   </div>
-                  <div className="w-full bg-neutral-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-neutral-800 h-2 rounded-full overflow-hidden relative z-10">
                     <div
                       className="bg-gradient-to-r from-amber-400 to-amber-300 h-full transition-all duration-200 rounded-full"
                       style={{ width: `${batchProgress.percent}%` }}
@@ -1455,9 +1491,10 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
             {completedCount > 0 ? (
               <div className="space-y-4">
                 {/* Results Global Header */}
-                <div className="flex flex-wrap items-center justify-between gap-2 bg-neutral-900 border border-neutral-800 p-3 rounded-xl shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-neutral-900/80 backdrop-blur-2xl border border-white/10 p-3.5 sm:p-4 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] relative overflow-hidden">
+                  <BorderBeam size={200} duration={7} borderWidth={3} colorFrom="#10b981" colorTo="#06b6d4" glow={true} />
+                  <div className="flex items-center gap-2.5 relative z-10">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-xs shadow-inner">
                       ✨
                     </div>
                     <div>
@@ -1473,7 +1510,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                     </div>
                   </div>
 
-                  <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5 bg-emerald-950/60 px-3 py-1.5 rounded-lg border border-emerald-500/30">
+                  <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/30 shadow-sm relative z-10">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>8K Resolution Ready</span>
                   </div>
@@ -1501,12 +1538,15 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                       <div
                         key={item.id}
                         id={`result-box-${item.id}`}
-                        className="bg-neutral-900 border border-emerald-500/50 rounded-xl p-3 sm:p-4 shadow-xl space-y-3 animate-fadeIn ring-1 ring-emerald-500/30"
+                        className="bg-neutral-900/80 backdrop-blur-2xl border border-emerald-500/40 rounded-3xl p-3.5 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)] space-y-3 animate-fadeIn ring-2 ring-emerald-500/20 relative overflow-hidden"
                       >
+                        {/* Thick Glowing Running Border Beam on each enhanced result card */}
+                        <BorderBeam size={220} duration={6} borderWidth={3.5} colorFrom="#10b981" colorTo="#f59e0b" glow={true} />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-emerald-500/5 via-transparent to-amber-500/5" />
                         {/* Result Box Header */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 pb-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800/80 pb-2.5 relative z-10">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-black text-xs">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-black text-xs">
                               #{originalIndex + 1}
                             </div>
                             <div>
@@ -1552,8 +1592,11 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                               </div>
                             )}
 
-                            <button
+                            <ShimmerButton
                               type="button"
+                              variant="neutral"
+                              showBorderBeam={true}
+                              beamBorderWidth={2.5}
                               onClick={() => {
                                 setQueue((prev) =>
                                   prev.map((i) =>
@@ -1575,12 +1618,12 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                                 setWipeNotice(`✨ Effect reset on ${item.name}! You can now choose any new effect and re-enhance.`);
                                 setTimeout(() => setWipeNotice(null), 3500);
                               }}
-                              className="px-2.5 py-1 bg-neutral-850 hover:bg-amber-400 hover:text-neutral-950 text-amber-300 text-[10px] font-black rounded-lg border border-amber-500/40 transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95"
+                              className="px-3 py-1.5 text-[10px] font-black rounded-xl"
                               title="Reset applied effect and pick a new effect to try"
                             >
                               <RotateCcw className="w-3 h-3 text-amber-400" />
                               <span>Reset & Try Other Effects</span>
-                            </button>
+                            </ShimmerButton>
 
                             <span className="text-emerald-400 font-mono font-black text-[10px] bg-emerald-950 px-2 py-1 rounded-lg border border-emerald-500/40">
                               {item.enhancedWidth} × {item.enhancedHeight} px
@@ -1589,7 +1632,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         </div>
 
                         {/* Split Comparison Viewer for this specific item */}
-                        <div className="bg-neutral-950 rounded-lg p-2 sm:p-3 border border-neutral-800 shadow-inner">
+                        <div className="bg-neutral-950 rounded-lg p-2 sm:p-3 border border-neutral-800 shadow-inner relative z-10">
                           {item.type === 'video' ? (
                             <VideoComparisonViewer
                               videoSrc={item.url}
@@ -1620,7 +1663,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         </div>
 
                         {/* Bottom Status Bar & Navigation for this image */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 bg-neutral-950 p-2.5 rounded-lg border border-neutral-800">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 bg-neutral-950 p-2.5 rounded-lg border border-neutral-800 relative z-10">
                           <div className="flex items-center gap-2 text-xs font-bold text-neutral-300">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                             <span className="truncate max-w-[200px] sm:max-w-xs">
@@ -1653,14 +1696,15 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               </div>
             ) : (
               /* Awaiting Enhancement Placeholder Box */
-              <div className="bg-neutral-900/60 border border-dashed border-neutral-800 rounded-xl p-5 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-neutral-850 mx-auto flex items-center justify-center text-amber-400">
+              <div className="bg-neutral-900/60 border border-dashed border-neutral-800 rounded-2xl p-5 text-center space-y-2 relative overflow-hidden">
+                <BorderBeam size={140} duration={8} borderWidth={2.5} colorFrom="#f59e0b" colorTo="#10b981" glow={true} />
+                <div className="w-10 h-10 rounded-full bg-neutral-850 mx-auto flex items-center justify-center text-amber-400 relative z-10">
                   <Sparkles className="w-5 h-5" />
                 </div>
-                <h4 className="text-xs sm:text-sm font-bold text-neutral-200">
+                <h4 className="text-xs sm:text-sm font-bold text-neutral-200 relative z-10">
                   Ready to Enhance: Select Your Desired Effects Above
                 </h4>
-                <p className="text-[11px] text-neutral-400 max-w-sm mx-auto">
+                <p className="text-[11px] text-neutral-400 max-w-sm mx-auto relative z-10">
                   Click the amber <strong>&apos;🚀 Order & Start Enhancing&apos;</strong> button above, or click the single green download button below.
                 </p>
               </div>
@@ -1668,8 +1712,11 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
           </div>
 
           {/* ================= 5. BOTTOM: MULTI-QUEUE BATCH CAROUSEL ================= */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3 sm:p-4 space-y-2.5 shadow-md mt-6">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-3.5 sm:p-5 space-y-3 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] mt-6 relative overflow-hidden">
+            {/* Thick Glowing Running Border Beam on Multi-Queue Box */}
+            <BorderBeam size={220} duration={7} borderWidth={3.5} colorFrom="#f59e0b" colorTo="#10b981" glow={true} />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-amber-400/5 via-transparent to-transparent" />
+            <div className="flex flex-wrap items-center justify-between gap-2 relative z-10">
               {/* Queue Header & Stats */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -1678,51 +1725,59 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                     Multi-Queue Media Manager ({queue.length} items)
                   </span>
                 </div>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm">
                   {completedCount} / {queue.length} Enhanced
                 </span>
               </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1.5">
-                <button
+                <ShimmerButton
                   type="button"
+                  variant="neutral"
+                  showBorderBeam={true}
+                  beamBorderWidth={2.5}
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-white text-[11px] font-black rounded-lg border border-neutral-700 flex items-center gap-1 cursor-pointer transition-all shadow-sm"
+                  className="px-3.5 py-2 text-white text-[11px] font-black rounded-xl"
                 >
                   <Plus className="w-3.5 h-3.5 text-amber-400" />
                   <span>Add More Files</span>
-                </button>
+                </ShimmerButton>
 
                 {isBatchProcessing ? (
                   <button
                     type="button"
                     onClick={handleStopBatch}
-                    className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black rounded-lg transition-all cursor-pointer"
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black rounded-xl transition-all cursor-pointer shadow-sm active:scale-95"
                   >
                     Stop
                   </button>
                 ) : (
-                  <button
+                  <ShimmerButton
                     type="button"
+                    variant="amber"
+                    showBorderBeam={true}
+                    beamBorderWidth={2.5}
                     onClick={handleEnhanceAllQueue}
-                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 text-[11px] font-black rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-md"
+                    className="px-4 py-2 text-neutral-950 text-[11px] font-black rounded-xl"
                   >
                     <Sparkles className="w-3.5 h-3.5 fill-neutral-950" />
                     <span>Enhance All ({queue.length})</span>
-                  </button>
+                  </ShimmerButton>
                 )}
               </div>
             </div>
 
             {/* Horizontal Scrollable Queue Carousel */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar pt-1">
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-2 no-scrollbar pt-1 relative z-10">
               {queue.map((item, idx) => {
                 const isActive = item.id === activeItem?.id;
                 const isEnhanced = item.enhancedUrl !== null;
                 return (
-                  <div
+                  <motion.div
                     key={item.id}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => {
                       setActiveItemId(item.id);
                       if (isEnhanced) {
@@ -1732,13 +1787,24 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         }
                       }
                     }}
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all shrink-0 select-none ${
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-2xl border cursor-pointer transition-all shrink-0 select-none relative overflow-hidden ${
                       isActive
-                        ? 'bg-neutral-800 border-amber-400 text-white shadow-md ring-2 ring-amber-400/40'
-                        : 'bg-neutral-950 border-neutral-800 text-neutral-300 hover:border-neutral-700 hover:text-white'
+                        ? 'bg-neutral-850 border-amber-400 text-white shadow-lg ring-2 ring-amber-400/40'
+                        : 'bg-neutral-950/80 border-neutral-800/90 text-neutral-300 hover:border-neutral-700 hover:text-white'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded overflow-hidden bg-neutral-900 shrink-0 border border-neutral-700 relative">
+                    {/* Glowing beam on active or enhanced carousel items */}
+                    {(isActive || isEnhanced) && (
+                      <BorderBeam
+                        size={60}
+                        duration={3}
+                        borderWidth={2.5}
+                        colorFrom={isActive ? '#f59e0b' : '#10b981'}
+                        colorTo={isActive ? '#fde047' : '#06b6d4'}
+                        glow={true}
+                      />
+                    )}
+                    <div className="w-9 h-9 rounded-xl overflow-hidden bg-neutral-900 shrink-0 border border-neutral-700/80 relative shadow-inner z-10">
                       {item.type === 'video' ? (
                         <div className="w-full h-full flex items-center justify-center bg-emerald-950 text-emerald-400 text-xs font-black">
                           ▶
@@ -1754,7 +1820,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                         </div>
                       )}
                     </div>
-                    <div className="text-[11px] leading-tight max-w-[100px] truncate">
+                    <div className="text-[11px] leading-tight max-w-[105px] truncate relative z-10">
                       <span className="font-bold block truncate text-white">
                         #{idx + 1} {item.name.replace(/\.[^/.]+$/, '')}
                       </span>
@@ -1773,12 +1839,12 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                     <button
                       type="button"
                       onClick={(e) => handleRemoveQueueItem(item.id, e)}
-                      className="text-neutral-500 hover:text-rose-400 p-0.5 ml-1 cursor-pointer"
+                      className="text-neutral-500 hover:text-rose-400 p-1 ml-0.5 cursor-pointer rounded-lg hover:bg-neutral-800 transition-colors relative z-10"
                       title="Remove from queue"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -1787,7 +1853,7 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
           {/* ================= 6. DEDICATED SINGLE GREEN MASTER DOWNLOAD BUTTON AT THE BOTTOM ================= */}
           <div className="sticky bottom-3 z-40 mt-6 max-w-4xl mx-auto w-full px-1">
             <div className="bg-neutral-900/95 backdrop-blur-xl border-2 border-emerald-500/80 p-3 sm:p-4 rounded-3xl shadow-2xl space-y-2 ring-4 ring-emerald-500/20 relative overflow-hidden">
-              <BorderBeam size={180} duration={8} colorFrom="#10b981" colorTo="#06b6d4" />
+              <BorderBeam size={220} duration={6} borderWidth={4} colorFrom="#10b981" colorTo="#06b6d4" glow={true} />
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 relative z-10">
                 {/* Information text & count */}
                 <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -1825,6 +1891,8 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
                 <ShimmerButton
                   type="button"
                   variant="emerald"
+                  showBorderBeam={true}
+                  beamBorderWidth={3.5}
                   onClick={handleUnifiedMasterAction}
                   disabled={isUnifiedDownloading || isBatchProcessing || queue.length === 0}
                   className="w-full sm:w-auto px-7 py-3.5 text-white font-black text-xs sm:text-sm rounded-2xl shadow-xl transition-all cursor-pointer"

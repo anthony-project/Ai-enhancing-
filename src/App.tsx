@@ -5,6 +5,8 @@ import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { TermsConditionsModal } from './components/TermsConditionsModal';
 import { SmoothScrollProvider } from './components/ui/SmoothScrollProvider';
 import { AnimatedGridBackground } from './components/ui/AnimatedGridBackground';
+import { DistortedGlassFilter } from './components/ui/DistortedGlassFilter';
+import { FloatingGlassLens } from './components/ui/FloatingGlassLens';
 import { ShieldCheck, Lock, FileText, Sparkles } from 'lucide-react';
 
 export default function App() {
@@ -14,8 +16,14 @@ export default function App() {
   return (
     <SmoothScrollProvider>
       <div className="min-h-screen bg-neutral-950 text-neutral-100 flex justify-center selection:bg-amber-400 selection:text-neutral-950 overflow-x-hidden w-full relative">
-        {/* Inspira & Animate UI Fluid Animated Ambient Background */}
+        {/* Olivier Larose 3D Distorted Glass Filter Pipeline */}
+        <DistortedGlassFilter />
+
+        {/* Inspira & Animate UI Fluid Animated Ambient Background with Chromatic Glass Caustics */}
         <AnimatedGridBackground />
+
+        {/* Interactive 3D Distorted Glass Lens Controller & Overlay */}
+        <FloatingGlassLens />
 
         {/* Phone Format App Container with Luxury Border & Shadow */}
         <div 
