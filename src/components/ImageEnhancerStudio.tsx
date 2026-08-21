@@ -1001,35 +1001,35 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="border-2 border-dashed border-neutral-800 hover:border-amber-400/80 bg-neutral-900/40 hover:bg-neutral-900/70 rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-all duration-200 group shadow-lg"
+          className="border border-dashed border-neutral-800 hover:border-amber-400/80 bg-neutral-900/40 hover:bg-neutral-900/70 rounded-xl p-4 sm:p-6 text-center cursor-pointer transition-all duration-200 group shadow-md"
         >
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-neutral-800/90 border border-neutral-700 group-hover:border-amber-400/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-inner">
-              <ImageIcon className="w-6 h-6 text-amber-400" />
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-9 h-9 rounded-lg bg-neutral-800/90 border border-neutral-700 group-hover:border-amber-400/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-inner">
+              <ImageIcon className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="w-7 h-7 rounded-full bg-neutral-850 flex items-center justify-center text-xs font-black text-neutral-300 border border-neutral-750">
+            <div className="w-5 h-5 rounded-full bg-neutral-850 flex items-center justify-center text-[10px] font-black text-neutral-300 border border-neutral-750">
               +
             </div>
-            <div className="w-12 h-12 rounded-xl bg-neutral-800/90 border border-neutral-700 group-hover:border-amber-400/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-inner">
-              <Film className="w-6 h-6 text-emerald-400" />
+            <div className="w-9 h-9 rounded-lg bg-neutral-800/90 border border-neutral-700 group-hover:border-amber-400/60 flex items-center justify-center group-hover:scale-105 transition-transform shadow-inner">
+              <Film className="w-4 h-4 text-emerald-400" />
             </div>
           </div>
 
-          <h2 className="text-base sm:text-xl font-black text-neutral-100 group-hover:text-amber-300 transition-colors">
+          <h2 className="text-sm sm:text-base font-black text-neutral-100 group-hover:text-amber-300 transition-colors">
             Upload Photos or Videos to Enhance in 8K UHD
           </h2>
-          <p className="text-xs text-neutral-300 mt-1.5 max-w-md mx-auto font-medium">
-            Select one or multiple files at once. Choose your 8K effects, click enhance, and download your crystal clear media.
+          <p className="text-[11px] text-neutral-300 mt-1 max-w-sm mx-auto font-medium">
+            Select one or multiple files at once. Choose your 8K effects, click enhance, and download.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-4 text-[11px] font-bold text-neutral-200">
-            <span className="flex items-center gap-1 bg-neutral-800/90 px-2.5 py-1 rounded-full border border-neutral-700">
-              📸 8K Sub-Pixel Laplacian Acuity
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 text-[10px] font-bold text-neutral-200">
+            <span className="flex items-center gap-1 bg-neutral-800/90 px-2 py-0.5 rounded-full border border-neutral-700">
+              📸 8K Sub-Pixel Acuity
             </span>
-            <span className="flex items-center gap-1 bg-neutral-800/90 px-2.5 py-1 rounded-full border border-neutral-700">
-              💎 Iris & Catchlight Recovery
+            <span className="flex items-center gap-1 bg-neutral-800/90 px-2 py-0.5 rounded-full border border-neutral-700">
+              💎 Iris Catchlight
             </span>
-            <span className="flex items-center gap-1 bg-neutral-800/90 px-2.5 py-1 rounded-full border border-neutral-700">
+            <span className="flex items-center gap-1 bg-neutral-800/90 px-2 py-0.5 rounded-full border border-neutral-700">
               ⚡ Multi-Queue (100+ Files)
             </span>
           </div>
@@ -1081,19 +1081,19 @@ export const ImageEnhancerStudio: React.FC<ImageEnhancerStudioProps> = ({ onOpen
               </div>
 
               {/* Selected Media Display Frame */}
-              <div className="relative w-full max-h-[300px] flex items-center justify-center overflow-hidden rounded-lg bg-neutral-950 border border-neutral-800 p-2">
+              <div className="relative w-full max-h-[220px] flex items-center justify-center overflow-hidden rounded-lg bg-neutral-950 border border-neutral-800 p-1.5">
                 {activeItem.type === 'video' && activeItem.url ? (
                   <video
                     src={activeItem.url}
                     controls
                     playsInline
-                    className="max-h-[280px] w-auto max-w-full object-contain rounded shadow"
+                    className="max-h-[200px] w-auto max-w-full object-contain rounded shadow"
                   />
                 ) : activeItem.url ? (
                   <img
                     src={activeItem.url}
                     alt="Selected Preview"
-                    className="max-h-[280px] w-auto max-w-full object-contain rounded shadow"
+                    className="max-h-[200px] w-auto max-w-full object-contain rounded shadow"
                   />
                 ) : null}
               </div>

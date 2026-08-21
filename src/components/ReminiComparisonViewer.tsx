@@ -58,6 +58,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const downloadMenuRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Pan shift helper
   const handlePan = (dx: number, dy: number) => {
@@ -72,15 +73,19 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
     setPanOffset({ x: 0, y: 0 });
   };
 
-  // Handle Dragging
+  // Handle Dragging with 60fps requestAnimationFrame throttling
   const handleMove = useCallback(
     (clientX: number) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      if (rect.width <= 0) return;
-      const x = clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      setSliderPosition(percentage);
+      if (animationFrameRef.current !== null) return;
+      animationFrameRef.current = requestAnimationFrame(() => {
+        animationFrameRef.current = null;
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const x = clientX - rect.left;
+        const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+        setSliderPosition(percentage);
+      });
     },
     []
   );
@@ -368,7 +373,7 @@ export const ReminiComparisonViewer: React.FC<ReminiComparisonViewerProps> = ({
       {/* Main Interactive Stage */}
       <div
         className={`relative w-full overflow-hidden bg-neutral-950 flex items-center justify-center select-none ${
-          isFullscreen ? 'flex-1 h-full' : 'h-[360px] sm:h-[450px]'
+          isFullscreen ? 'flex-1 h-full' : 'h-[280px] sm:h-[340px]'
         }`}
       >
         {/* VIEW MODE 1: REMINI SPLIT SLIDER WITH TOUCH-LOCK POINTER CAPTURE */}

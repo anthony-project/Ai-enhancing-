@@ -35,10 +35,10 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
         if (res.ok) {
           const data = await res.json();
           if (typeof data.activeUsers === 'number') {
-            setActiveUsers(Math.max(1, data.activeUsers));
+            setActiveUsers((prev) => (prev !== data.activeUsers ? Math.max(1, data.activeUsers) : prev));
           }
           if (typeof data.totalVisits === 'number') {
-            setTotalVisits(data.totalVisits);
+            setTotalVisits((prev) => (prev !== data.totalVisits ? data.totalVisits : prev));
           }
         }
       } catch {
@@ -49,10 +49,10 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
     // First call counts the visit session
     fetchStats(isNew);
 
-    // Heartbeat ping every 12 seconds to keep online status active
+    // Heartbeat ping every 20 seconds to maintain online status without frequent re-renders
     const interval = setInterval(() => {
       fetchStats(false);
-    }, 12000);
+    }, 20000);
 
     return () => clearInterval(interval);
   }, []);
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
         >
           <div
             id="logo-icon"
-            className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-neutral-900 border border-neutral-750 shadow-md overflow-hidden shrink-0 group-hover:border-amber-400/60 transition-all p-0.5"
+            className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-neutral-900 border border-neutral-750 shadow-md overflow-hidden shrink-0 group-hover:border-amber-400/60 transition-all p-0.5"
           >
             <img
               src="/logo.jpg"
@@ -97,11 +97,11 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
           {/* Live Visitor & Online Stats Mini Box */}
           <div
             id="visitor-stats-minibox"
-            className="flex items-center gap-1.5 sm:gap-3 bg-neutral-900/90 border border-neutral-800 px-2.5 sm:px-3.5 py-1.5 rounded-xl shadow-inner text-[10px] sm:text-xs"
+            className="flex items-center gap-1.5 sm:gap-2.5 bg-neutral-900/90 border border-neutral-800 px-2 sm:px-3 py-1 rounded-xl shadow-inner text-[10px] sm:text-xs"
           >
             {/* Online / Active Users Counting */}
             <div
-              className="flex items-center gap-1 sm:gap-1.5 text-neutral-200 font-medium"
+              className="flex items-center gap-1 text-neutral-200 font-medium"
               title="Users currently using this site online"
             >
               <span className="relative flex h-2 w-2">
@@ -113,11 +113,11 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
             </div>
 
             {/* Divider */}
-            <div className="h-3.5 w-px bg-neutral-750" />
+            <div className="h-3 w-px bg-neutral-750" />
 
             {/* Total Visits Counting */}
             <div
-              className="flex items-center gap-1 sm:gap-1.5 text-neutral-300 font-medium"
+              className="flex items-center gap-1 text-neutral-300 font-medium"
               title="Total visits to this site"
             >
               <Eye className="w-3 h-3 text-amber-400 shrink-0" />

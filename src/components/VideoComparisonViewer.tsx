@@ -57,6 +57,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
   const enhancedVideoRef = useRef<HTMLVideoElement>(null);
   const sideBySideOrigRef = useRef<HTMLVideoElement>(null);
   const sideBySideEnhRef = useRef<HTMLVideoElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Compute ultra-fast hardware GPU CSS filter
   const cssFilter = getEnhancedVideoCssFilter(options);
@@ -162,21 +163,25 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
   const handleVideoTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     const vid = e.currentTarget;
     const now = Date.now();
-    // Throttle React state updates to ~4 times per second to eliminate 60fps UI re-render lag
-    if (now - lastTimeUpdateRef.current > 250) {
+    // Throttle React state updates to ~2 times per second to eliminate 60fps UI re-render lag
+    if (now - lastTimeUpdateRef.current > 500) {
       lastTimeUpdateRef.current = now;
       setCurrentTime(vid.currentTime);
     }
   };
 
-  // Slider Dragging with Pointer Capture
+  // Slider Dragging with 60fps requestAnimationFrame throttling
   const handleSliderMove = useCallback((clientX: number) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const x = clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    setSliderPosition(percentage);
+    if (animationFrameRef.current !== null) return;
+    animationFrameRef.current = requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const x = clientX - rect.left;
+      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      setSliderPosition(percentage);
+    });
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -266,61 +271,61 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
     duration || (masterVideoRef.current ? masterVideoRef.current.duration : 0) || 0;
 
   return (
-    <div className="space-y-4 select-none w-full">
+    <div className="space-y-3 select-none w-full">
       {/* Top Controls Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 bg-neutral-900/95 p-3 rounded-2xl border border-neutral-800 text-xs shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-neutral-900/95 p-2.5 rounded-xl border border-neutral-800 text-xs shadow-md">
         {/* Mode Selector */}
-        <div className="flex items-center gap-1.5 bg-neutral-950 p-1 rounded-xl border border-neutral-800">
+        <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-lg border border-neutral-800">
           <button
             type="button"
             onClick={() => setViewMode('split')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+            className={`px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1 cursor-pointer text-xs ${
               viewMode === 'split'
-                ? 'bg-amber-400 text-neutral-950 shadow-md ring-1 ring-amber-300'
+                ? 'bg-amber-400 text-neutral-950 shadow-sm'
                 : 'text-neutral-400 hover:text-neutral-100'
             }`}
             title="Interactive Split Slider (Before vs After)"
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className="w-3 h-3" />
             <span>Split Slider</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('sideBySide')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+            className={`px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1 cursor-pointer text-xs ${
               viewMode === 'sideBySide'
-                ? 'bg-amber-400 text-neutral-950 shadow-md ring-1 ring-amber-300'
+                ? 'bg-amber-400 text-neutral-950 shadow-sm'
                 : 'text-neutral-400 hover:text-neutral-100'
             }`}
             title="Side by Side Comparison"
           >
-            <Columns className="w-3.5 h-3.5" />
+            <Columns className="w-3 h-3" />
             <span>Side by Side</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode('enhancedOnly')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs ${
+            className={`px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1 cursor-pointer text-xs ${
               viewMode === 'enhancedOnly'
-                ? 'bg-amber-400 text-neutral-950 shadow-md ring-1 ring-amber-300'
+                ? 'bg-amber-400 text-neutral-950 shadow-sm'
                 : 'text-neutral-400 hover:text-neutral-100'
             }`}
             title="Full 8K Enhanced Video View"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3 h-3" />
             <span>Enhanced 8K</span>
           </button>
         </div>
 
         {/* Action buttons: Extract Frame (and optional Download if enabled) */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleCaptureFrame}
-            className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-100 font-semibold rounded-xl border border-neutral-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+            className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-750 text-neutral-100 font-semibold rounded-lg border border-neutral-700 transition-all flex items-center gap-1 cursor-pointer shadow-sm active:scale-95 text-xs"
             title="Capture current video frame as 8K Photo"
           >
-            <Camera className="w-4 h-4 text-amber-400" />
+            <Camera className="w-3.5 h-3.5 text-amber-400" />
             <span className="hidden sm:inline">Capture 8K Frame</span>
           </button>
 
@@ -329,22 +334,22 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
               type="button"
               onClick={handleExportVideo}
               disabled={isExporting}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-neutral-950 font-black rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 active:scale-95 text-xs sm:text-sm"
+              className="px-3 py-1 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-neutral-950 font-black rounded-lg shadow transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 active:scale-95 text-xs"
             >
               {isExporting ? (
                 <>
-                  <RefreshCw className="w-4 h-4 text-neutral-950 animate-spin" />
-                  <span>Exporting 8K Video ({exportProgress}%)...</span>
+                  <RefreshCw className="w-3.5 h-3.5 text-neutral-950 animate-spin" />
+                  <span>Exporting ({exportProgress}%)...</span>
                 </>
               ) : downloadSuccess ? (
                 <>
-                  <Check className="w-4 h-4 text-neutral-950 stroke-[3]" />
-                  <span>Downloaded Successfully!</span>
+                  <Check className="w-3.5 h-3.5 text-neutral-950 stroke-[3]" />
+                  <span>Downloaded!</span>
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4 stroke-[2.5]" />
-                  <span>Download Enhanced Video</span>
+                  <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Download Video</span>
                 </>
               )}
             </button>
@@ -354,36 +359,31 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
 
       {/* Export Progress Bar when active */}
       {isExporting && (
-        <div className="bg-neutral-900 border border-emerald-500/40 rounded-xl p-3.5 space-y-2 shadow-xl animate-fadeIn">
-          <div className="flex items-center justify-between text-xs font-bold text-neutral-200">
-            <span className="flex items-center gap-1.5 text-emerald-400">
+        <div className="bg-neutral-900 border border-emerald-500/40 rounded-xl p-2.5 space-y-1.5 shadow-xl animate-fadeIn text-xs">
+          <div className="flex items-center justify-between font-bold text-neutral-200">
+            <span className="flex items-center gap-1 text-emerald-400">
               <Sparkles className="w-3.5 h-3.5 animate-spin" />
               <span>Fast 8K Processing & MP4 Hardware Encoding</span>
             </span>
-            <span className="font-mono text-emerald-400 text-sm font-black">{exportProgress}%</span>
+            <span className="font-mono text-emerald-400 font-black">{exportProgress}%</span>
           </div>
-          <div className="w-full h-2.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800 p-0.5">
+          <div className="w-full h-2 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800">
             <div
               className="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-150"
               style={{ width: `${exportProgress}%` }}
             />
           </div>
-          <p className="text-[11px] text-neutral-400 text-center">
-            {exportProgress < 100
-              ? 'Rendering high dynamic contrast & temporal detail without quality loss...'
-              : 'Encoding finished! Preparing high-res download...'}
-          </p>
         </div>
       )}
 
-      {/* ================= EXTRA LARGE & IMMERSIVE VIDEO VIEWPORT ================= */}
+      {/* ================= SLEEK & COMPACT VIDEO VIEWPORT ================= */}
       <div
         ref={containerRef}
-        className="relative w-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] max-h-[82vh] bg-black rounded-2xl overflow-hidden border-2 border-neutral-800 shadow-2xl flex items-center justify-center select-none"
+        className="relative w-full h-[280px] sm:h-[350px] max-h-[50vh] bg-black rounded-xl overflow-hidden border border-neutral-800 shadow-xl flex items-center justify-center select-none"
       >
-        {/* ================= VIEW MODE 1: SPLIT SLIDER (HARDWARE ACCELERATED GPU COMPOSITION) ================= */}
+        {/* ================= VIEW MODE 1: SPLIT SLIDER ================= */}
         {viewMode === 'split' && Boolean(videoSrc) && (
-          <div className="relative w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center overflow-hidden">
+          <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
             {/* Original Video (Left side of slider) */}
             <video
               ref={masterVideoRef}
@@ -397,7 +397,6 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
                 willChange: 'clip-path, transform',
                 transform: 'translate3d(0, 0, 0)',
-                backfaceVisibility: 'hidden',
               }}
               onTimeUpdate={handleVideoTimeUpdate}
               onPlay={() => setIsPlaying(true)}
@@ -418,54 +417,49 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 clipPath: `inset(0 0 0 ${sliderPosition}%)`,
                 willChange: 'clip-path, filter, transform',
                 transform: 'translate3d(0, 0, 0)',
-                backfaceVisibility: 'hidden',
               }}
             />
 
             {/* Original Tag */}
-            <div className="absolute top-4 left-4 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-300 border border-white/10 uppercase tracking-wider shadow-lg flex items-center gap-1.5 pointer-events-none">
-              <Film className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Original Video</span>
+            <div className="absolute top-2.5 left-2.5 bg-neutral-950/85 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-neutral-300 border border-white/10 uppercase tracking-wider shadow flex items-center gap-1 pointer-events-none">
+              <Film className="w-3 h-3 text-neutral-400" />
+              <span>Original</span>
             </div>
 
             {/* 8K Enhanced Tag */}
-            <div className="absolute top-4 right-4 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-none">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>8K Enhanced Video</span>
+            <div className="absolute top-2.5 right-2.5 bg-amber-950/85 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1 shadow pointer-events-none">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>8K Enhanced</span>
             </div>
 
-            {/* ================= PROMINENT & EXTRA LARGE VIDEO SLIDER BOX ================= */}
+            {/* ================= COMPACT VIDEO SLIDER HANDLE ================= */}
             <div
-              className="absolute top-0 bottom-0 w-1 bg-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.9)] cursor-ew-resize z-20 flex items-center justify-center -ml-0.5"
+              className="absolute top-0 bottom-0 w-0.5 bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)] cursor-ew-resize z-20 flex items-center justify-center -ml-0.5"
               style={{ left: `${sliderPosition}%` }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
             >
-              {/* EXTRA LARGE SLIDER HANDLE BOX */}
               <div
-                className={`min-w-[95px] px-3.5 py-2 rounded-2xl bg-neutral-950 text-amber-400 shadow-[0_10px_30px_rgba(0,0,0,0.9)] flex items-center justify-center gap-2 border-2 border-amber-400 cursor-ew-resize select-none transition-transform hover:scale-105 active:scale-95 ${
-                  isDraggingSlider ? 'scale-110 ring-4 ring-amber-400/50 bg-neutral-900' : ''
+                className={`px-2.5 py-1 min-w-[70px] rounded-xl bg-neutral-950 text-amber-400 shadow-xl flex items-center justify-center gap-1.5 border border-amber-400 cursor-ew-resize select-none transition-transform hover:scale-105 active:scale-95 ${
+                  isDraggingSlider ? 'scale-105 ring-2 ring-amber-400/50 bg-neutral-900' : ''
                 }`}
                 style={{ touchAction: 'none' }}
               >
-                <span className="text-[13px] font-black text-amber-300 animate-pulse">◀</span>
-                <div className="flex flex-col items-center justify-center leading-none">
-                  <span className="text-[11px] font-black tracking-wider text-white">8K UHD</span>
-                  <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-tight">SLIDE</span>
-                </div>
-                <span className="text-[13px] font-black text-amber-300 animate-pulse">▶</span>
+                <span className="text-[10px] font-black text-amber-300">◀</span>
+                <span className="text-[9px] font-black tracking-wider text-white">8K SLIDE</span>
+                <span className="text-[10px] font-black text-amber-300">▶</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* ================= VIEW MODE 2: EXTRA LARGE SIDE BY SIDE ================= */}
+        {/* ================= VIEW MODE 2: SIDE BY SIDE ================= */}
         {viewMode === 'sideBySide' && Boolean(videoSrc) && (
-          <div className="w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] grid grid-cols-1 md:grid-cols-2 gap-2 p-2 bg-neutral-950">
+          <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-1.5 p-1.5 bg-neutral-950">
             {/* Left Box: Original */}
-            <div className="relative w-full h-full min-h-[260px] md:min-h-[540px] rounded-xl overflow-hidden border border-neutral-800 flex items-center justify-center bg-black shadow-inner">
+            <div className="relative w-full h-full min-h-[130px] rounded-lg overflow-hidden border border-neutral-800 flex items-center justify-center bg-black shadow-inner">
               <video
                 ref={sideBySideOrigRef}
                 src={videoSrc}
@@ -477,14 +471,14 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
               />
-              <div className="absolute top-3 left-3 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-neutral-300 border border-white/10 flex items-center gap-1.5 shadow-md pointer-events-none">
-                <Film className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Original Video</span>
+              <div className="absolute top-2 left-2 bg-neutral-950/85 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold text-neutral-300 border border-white/10 flex items-center gap-1 pointer-events-none">
+                <Film className="w-3 h-3 text-neutral-400" />
+                <span>Original</span>
               </div>
             </div>
 
             {/* Right Box: Enhanced 8K */}
-            <div className="relative w-full h-full min-h-[260px] md:min-h-[540px] rounded-xl overflow-hidden border-2 border-amber-500/50 flex items-center justify-center bg-black shadow-inner">
+            <div className="relative w-full h-full min-h-[130px] rounded-lg overflow-hidden border border-amber-500/40 flex items-center justify-center bg-black shadow-inner">
               <video
                 ref={sideBySideEnhRef}
                 src={videoSrc}
@@ -494,9 +488,9 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 style={{ filter: cssFilter }}
                 className="w-full h-full object-contain pointer-events-none"
               />
-              <div className="absolute top-3 left-3 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shadow-md pointer-events-none">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>8K Enhanced (UHD Dynamic)</span>
+              <div className="absolute top-2 left-2 bg-amber-950/85 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1 pointer-events-none">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>8K Enhanced</span>
               </div>
             </div>
           </div>
@@ -504,7 +498,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
 
         {/* ================= VIEW MODE 3: FULL ENHANCED 8K VIEW ================= */}
         {viewMode === 'enhancedOnly' && Boolean(videoSrc) && (
-          <div className="relative w-full h-full min-h-[460px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center bg-black">
+          <div className="relative w-full h-full flex items-center justify-center bg-black">
             <video
               ref={masterVideoRef}
               src={videoSrc}
@@ -517,49 +511,49 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />
-            <div className="absolute top-4 right-4 bg-amber-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1.5 shadow-lg pointer-events-none">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Full 8K Enhanced Video View</span>
+            <div className="absolute top-2.5 right-2.5 bg-amber-950/85 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-amber-300 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1 shadow pointer-events-none">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>Full 8K View</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Video Playback & Scrubber Controls Bar */}
-      <div className="bg-neutral-900/95 border border-neutral-800 p-3.5 rounded-2xl space-y-3 shadow-lg">
+      <div className="bg-neutral-900/95 border border-neutral-800 p-2.5 rounded-xl space-y-2 shadow-sm">
         {/* Scrubber Range */}
-        <div className="flex items-center gap-3 text-xs font-mono text-neutral-400">
-          <span className="font-bold text-amber-400 w-10">{formatTime(currentTime)}</span>
+        <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400">
+          <span className="font-bold text-amber-400 w-9">{formatTime(currentTime)}</span>
           <input
             type="range"
             min="0"
             max={totalDuration || 100}
-            step="0.05"
+            step="0.1"
             value={currentTime}
             onChange={handleSeek}
-            className="flex-1 h-2 bg-neutral-800 accent-amber-400 rounded-lg cursor-pointer transition-all"
+            className="flex-1 h-1.5 bg-neutral-800 accent-amber-400 rounded cursor-pointer"
           />
-          <span className="text-neutral-400 w-10 text-right">{formatTime(totalDuration)}</span>
+          <span className="text-neutral-400 w-9 text-right">{formatTime(totalDuration)}</span>
         </div>
 
         {/* Bottom Playback Buttons */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={togglePlay}
-              className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-xl font-black transition-transform active:scale-95 cursor-pointer shadow-md flex items-center gap-2"
+              className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded-lg font-black transition-transform active:scale-95 cursor-pointer shadow flex items-center gap-1.5 text-xs"
               title={isPlaying ? 'Pause Video' : 'Play Video'}
             >
               {isPlaying ? (
                 <>
-                  <Pause className="w-4 h-4 fill-neutral-950" />
-                  <span className="text-xs">Pause</span>
+                  <Pause className="w-3.5 h-3.5 fill-neutral-950" />
+                  <span>Pause</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4 fill-neutral-950" />
-                  <span className="text-xs">Play Video</span>
+                  <Play className="w-3.5 h-3.5 fill-neutral-950" />
+                  <span>Play</span>
                 </>
               )}
             </button>
@@ -578,24 +572,24 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                 });
                 setCurrentTime(0);
               }}
-              className="p-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl transition-colors cursor-pointer"
-              title="Restart Video from Beginning"
+              className="p-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-lg transition-colors cursor-pointer"
+              title="Restart Video"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
 
             <button
               type="button"
               onClick={() => setIsMuted(!isMuted)}
-              className="p-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl transition-colors cursor-pointer"
-              title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+              className="p-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-lg transition-colors cursor-pointer"
+              title={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isMuted ? <VolumeX className="w-4 h-4 text-neutral-400" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-neutral-400" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
             </button>
 
             {/* Speed Selector */}
-            <div className="flex items-center text-xs bg-neutral-950 px-2.5 py-1.5 rounded-xl border border-neutral-800 text-neutral-300 gap-1.5">
-              <span className="text-[11px] text-neutral-400 font-semibold">Speed:</span>
+            <div className="flex items-center text-[10px] bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800 text-neutral-300 gap-1">
+              <span className="text-neutral-400 font-semibold">Speed:</span>
               {[0.5, 1, 1.5, 2].map((rate) => (
                 <button
                   key={rate}
@@ -612,7 +606,7 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
                       if (v) v.playbackRate = rate;
                     });
                   }}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-bold cursor-pointer transition-colors ${
+                  className={`px-1.5 py-0.5 rounded font-bold cursor-pointer transition-colors ${
                     playbackRate === rate ? 'bg-amber-400 text-neutral-950' : 'text-neutral-400 hover:text-white'
                   }`}
                 >
@@ -623,9 +617,9 @@ export const VideoComparisonViewer: React.FC<VideoComparisonViewerProps> = ({
           </div>
 
           {dimensions && (
-            <div className="text-[11px] font-mono text-emerald-400 bg-neutral-950 px-3 py-1.5 rounded-xl border border-neutral-800 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{dimensions.width} × {dimensions.height} px (100% Native)</span>
+            <div className="text-[10px] font-mono text-emerald-400 bg-neutral-950 px-2 py-1 rounded-lg border border-neutral-800 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{dimensions.width} × {dimensions.height} px</span>
             </div>
           )}
         </div>
