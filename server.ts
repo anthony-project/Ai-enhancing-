@@ -27,6 +27,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   );
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Safe preview inside container iframe
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; img-src 'self' data: https: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:; media-src 'self' blob: data: https:; object-src 'none'; frame-ancestors 'self';"
+  );
 
   // Zero-Data Retention Architecture: Never cache user media or API outputs
   if (req.path.startsWith('/api/')) {
