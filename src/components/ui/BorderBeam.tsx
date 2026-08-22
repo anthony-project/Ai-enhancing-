@@ -14,10 +14,10 @@ interface BorderBeamProps {
 
 export const BorderBeam: React.FC<BorderBeamProps> = ({
   className = '',
-  size = 180,
+  size = 140,
   duration = 6,
   anchor = 90,
-  borderWidth = 3, // Thicker high-visibility running stroke as requested
+  borderWidth = 2.5,
   colorFrom = '#f59e0b',
   colorTo = '#10b981',
   delay = 0,
